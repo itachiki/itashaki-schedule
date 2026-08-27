@@ -1,0 +1,63 @@
+[
+  {
+    "id": "20260825-ended",
+    "title": "アーカイブ振り返り雑談",
+    "start": "2026-08-25T20:00:00+09:00",
+    "end": "2026-08-25T21:00:00+09:00",
+    "category": "雑談",
+    "content": "配信アーカイブ",
+    "description": "先週の名場面をゆるく振り返ります。",
+    "youtubeUrl": ""
+  },
+  {
+    "id": "20260828-afternoon",
+    "title": "FF14 ルーレット",
+    "start": "2026-08-28T16:00:00+09:00",
+    "end": "2026-08-28T18:30:00+09:00",
+    "category": "通常配信",
+    "content": "FINAL FANTASY XIV",
+    "description": "のんびりルレ消化。初見さんも歓迎です。",
+    "youtubeUrl": "https://www.youtube.com/"
+  },
+  {
+    "id": "20260829-late",
+    "title": "深夜のストーリー進行",
+    "start": "2026-08-29T23:00:00+09:00",
+    "end": "2026-08-30T01:00:00+09:00",
+    "category": "通常配信",
+    "content": "FINAL FANTASY XIV",
+    "description": "ネタバレに配慮しつつ、メインストーリーを進めます。",
+    "youtubeUrl": ""
+  },
+  {
+    "id": "20260830-midnight",
+    "title": "協力ゲーム ナイトセッション",
+    "start": "2026-08-30T23:30:00+09:00",
+    "end": "2026-08-31T02:30:00+09:00",
+    "category": "コラボ",
+    "content": "協力型アクションゲーム",
+    "description": "参加メンバーは配信開始前にお知らせします。",
+    "youtubeUrl": ""
+  },
+  {
+    "id": "20260831-month-crossing",
+    "title": "月末まったり作業配信",
+    "start": "2026-08-31T23:00:00+09:00",
+    "end": "2026-09-01T01:30:00+09:00",
+    "category": "作業配信",
+    "content": "雑談・作業",
+    "description": "8月最後の夜を一緒に過ごしましょう。",
+    "youtubeUrl": ""
+  },
+  {
+    "id": "20261231-year-crossing",
+    "title": "年越しカウントダウン配信",
+    "start": "2026-12-31T23:30:00+09:00",
+    "end": "2027-01-01T02:00:00+09:00",
+    "category": "特別配信",
+    "content": "年越し雑談",
+    "description": "今年の振り返りと新年のごあいさつをお届けします。",
+    "youtubeUrl": ""
+  }
+]
+

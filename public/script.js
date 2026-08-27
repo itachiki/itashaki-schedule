@@ -1,0 +1,200 @@
+(() => {
+  'use strict';
+
+  const TIME_ZONE = 'Asia/Tokyo';
+  const INITIAL_FILTER = 'week';
+  const DATE_PARTS_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+  });
+  const WEEKDAY_FORMATTER = new Intl.DateTimeFormat('ja-JP', { timeZone: TIME_ZONE, weekday: 'short' });
+
+  const list = document.querySelector('#schedule-list');
+  const message = document.querySelector('#schedule-message');
+  const filters = [...document.querySelectorAll('[data-filter]')];
+  let schedules = [];
+  let activeFilter = INITIAL_FILTER;
+
+  function tokyoParts(date) {
+    const parts = Object.fromEntries(DATE_PARTS_FORMATTER.formatToParts(date)
+      .filter(({ type }) => type !== 'literal')
+      .map(({ type, value }) => [type, Number(value)]));
+    return parts;
+  }
+
+  function tokyoDateKey(date) {
+    const { year, month, day } = tokyoParts(date);
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+
+  function dateKeyToUtcMs(key) {
+    const [year, month, day] = key.split('-').map(Number);
+    return Date.UTC(year, month - 1, day);
+  }
+
+  function shiftDateKey(key, days) {
+    const shifted = new Date(dateKeyToUtcMs(key) + days * 86400000);
+    return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}-${String(shifted.getUTCDate()).padStart(2, '0')}`;
+  }
+
+  function weekRange(now) {
+    const today = tokyoDateKey(now);
+    const dayOfWeek = new Date(dateKeyToUtcMs(today)).getUTCDay();
+    const daysSinceMonday = (dayOfWeek + 6) % 7;
+    const start = shiftDateKey(today, -daysSinceMonday);
+    return { start, end: shiftDateKey(start, 6) };
+  }
+
+  function formatDate(start) {
+    const { month, day } = tokyoParts(start);
+    return { label: `${month}/${day}`, weekday: WEEKDAY_FORMATTER.format(start) };
+  }
+
+  function formatTimeRange(start, end) {
+    const startParts = tokyoParts(start);
+    const endParts = tokyoParts(end);
+    const startKey = tokyoDateKey(start);
+    const endKey = tokyoDateKey(end);
+    const daysAfterStart = Math.round((dateKeyToUtcMs(endKey) - dateKeyToUtcMs(startKey)) / 86400000);
+    const endHour = endParts.hour + Math.max(0, daysAfterStart) * 24;
+    return `${String(startParts.hour).padStart(2, '0')}:${String(startParts.minute).padStart(2, '0')} ～ ${String(endHour).padStart(2, '0')}:${String(endParts.minute).padStart(2, '0')}`;
+  }
+
+  function getStatus(schedule, now) {
+    if (now.getTime() < schedule.start.getTime()) return 'UPCOMING';
+    if (now.getTime() < schedule.end.getTime()) return 'LIVE';
+    return 'ENDED';
+  }
+
+  function validYouTubeUrl(value) {
+    if (!value) return '';
+    try {
+      const url = new URL(value);
+      const allowedHosts = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'www.youtu.be'];
+      return url.protocol === 'https:' && allowedHosts.includes(url.hostname) ? url.href : '';
+    } catch {
+      return '';
+    }
+  }
+
+  function normaliseSchedule(raw) {
+    if (!raw || typeof raw !== 'object') throw new Error('予定データがオブジェクトではありません。');
+    if (typeof raw.id !== 'string' || !raw.id.trim()) throw new Error('id が不足しています。');
+    if (typeof raw.title !== 'string' || !raw.title.trim()) throw new Error(`${raw.id}: title が不足しています。`);
+    if (typeof raw.start !== 'string' || typeof raw.end !== 'string') throw new Error(`${raw.id}: start または end が不足しています。`);
+    if (!/(Z|[+-]\d{2}:\d{2})$/i.test(raw.start) || !/(Z|[+-]\d{2}:\d{2})$/i.test(raw.end)) {
+      throw new Error(`${raw.id}: start と end はタイムゾーン付きISO日時で指定してください。`);
+    }
+    const start = new Date(raw.start);
+    const end = new Date(raw.end);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) throw new Error(`${raw.id}: 日時の形式または開始・終了時刻が不正です。`);
+    return {
+      id: raw.id, title: raw.title.trim(), start, end,
+      category: typeof raw.category === 'string' && raw.category.trim() ? raw.category.trim() : '配信',
+      content: typeof raw.content === 'string' ? raw.content.trim() : '',
+      description: typeof raw.description === 'string' ? raw.description.trim() : '',
+      youtubeUrl: validYouTubeUrl(raw.youtubeUrl)
+    };
+  }
+
+  function createTextElement(tag, className, text) {
+    const element = document.createElement(tag);
+    element.className = className;
+    element.textContent = text;
+    return element;
+  }
+
+  function createCard(schedule, status) {
+    const card = document.createElement('article');
+    card.className = `schedule-card${status === 'LIVE' ? ' is-live' : ''}`;
+    card.setAttribute('aria-label', `${schedule.title}、${status === 'LIVE' ? '配信中' : '配信予定'}`);
+    const top = document.createElement('div');
+    top.className = 'card-top';
+    const formattedDate = formatDate(schedule.start);
+    const date = createTextElement('p', 'date', formattedDate.label);
+    const weekday = createTextElement('span', 'weekday', `（${formattedDate.weekday}）`);
+    date.append(weekday);
+    top.append(date);
+    const statusLabel = createTextElement('p', `status${status === 'LIVE' ? ' status-live' : ''}`, status);
+    top.append(statusLabel);
+    card.append(top);
+    card.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
+    card.append(createTextElement('p', 'category', schedule.category));
+    card.append(createTextElement('h3', 'title', schedule.title));
+    if (schedule.content) card.append(createTextElement('p', 'content-name', schedule.content));
+    if (schedule.description) card.append(createTextElement('p', 'description', schedule.description));
+    const footer = document.createElement('div');
+    footer.className = 'card-footer';
+    if (schedule.youtubeUrl) {
+      const link = document.createElement('a');
+      link.className = 'youtube-link';
+      link.href = schedule.youtubeUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'YouTubeで見る';
+      link.setAttribute('aria-label', `${schedule.title}をYouTubeで見る（新しいタブで開く）`);
+      footer.append(link);
+    }
+    card.append(footer);
+    return card;
+  }
+
+  function setMessage(text, kind = '') {
+    message.textContent = text;
+    message.className = `schedule-message${kind ? ` is-${kind}` : ''}`;
+  }
+
+  function isWithinFilter(schedule, filter, now) {
+    if (getStatus(schedule, now) === 'ENDED') return false;
+    const startKey = tokyoDateKey(schedule.start);
+    if (filter === 'today') return startKey === tokyoDateKey(now);
+    if (filter === 'week') {
+      const range = weekRange(now);
+      return startKey >= range.start && startKey <= range.end;
+    }
+    return true;
+  }
+
+  function render() {
+    const now = new Date();
+    const visible = schedules.filter((schedule) => isWithinFilter(schedule, activeFilter, now));
+    list.replaceChildren();
+    list.setAttribute('aria-busy', 'false');
+    if (!visible.length) {
+      setMessage('この期間に表示できる今後の配信予定はありません。', 'empty');
+      return;
+    }
+    setMessage('');
+    visible.forEach((schedule) => list.append(createCard(schedule, getStatus(schedule, now))));
+  }
+
+  function setFilter(filter) {
+    activeFilter = filter;
+    filters.forEach((button) => {
+      const selected = button.dataset.filter === filter;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+    render();
+  }
+
+  async function loadSchedules() {
+    try {
+      const response = await fetch('schedules.json', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (!Array.isArray(data)) throw new Error('schedules.json の最上位は配列にしてください。');
+      schedules = data.map(normaliseSchedule).sort((a, b) => a.start - b.start);
+      setFilter(INITIAL_FILTER);
+    } catch (error) {
+      list.replaceChildren();
+      list.setAttribute('aria-busy', 'false');
+      setMessage('配信予定を読み込めませんでした。時間をおいて再読み込みしてください。', 'error');
+      console.error('schedules.json の読み込みまたは形式のエラー:', error);
+    }
+  }
+
+  filters.forEach((button) => button.addEventListener('click', () => setFilter(button.dataset.filter)));
+  loadSchedules();
+  window.setInterval(render, 30000);
+})();
+
