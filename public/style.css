@@ -35,8 +35,6 @@ button, a { font: inherit; }
 .eyebrow { margin: 0 0 .5rem; color: var(--color-accent); font-size: .78rem; font-weight: 800; letter-spacing: .14em; }
 h1, h2, h3, p { overflow-wrap: anywhere; }
 h1 { margin: 0; font-size: clamp(2.25rem, 7vw, 4.25rem); letter-spacing: -.05em; line-height: 1.1; }
-.hero-copy { margin: 1rem 0 0; color: var(--color-muted); font-size: 1.05rem; }
-
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 1.25rem; margin-bottom: 1.5rem; }
 h2 { margin: 0; font-size: clamp(1.35rem, 3vw, 1.8rem); letter-spacing: -.03em; }
 .timezone-note { margin: .25rem 0 0; color: var(--color-muted); font-size: .9rem; }
@@ -66,7 +64,8 @@ h2 { margin: 0; font-size: clamp(1.35rem, 3vw, 1.8rem); letter-spacing: -.03em; 
 .schedule-card.is-live::before { position: absolute; top: 0; left: 1.25rem; width: 3.5rem; height: 4px; border-radius: 0 0 99px 99px; background: var(--color-live); content: ""; }
 .card-top { display: flex; align-items: start; justify-content: space-between; gap: .75rem; }
 .date { margin: 0; color: var(--color-accent); font-size: 1.55rem; font-weight: 850; letter-spacing: -.04em; line-height: 1.1; }
-.weekday { margin-left: .3rem; color: var(--color-muted); font-size: .88rem; font-weight: 700; letter-spacing: 0; }
+.year { display: block; margin-bottom: .3rem; color: var(--color-muted); font-size: .72rem; font-weight: 750; letter-spacing: .06em; }
+.weekday { margin-left: .3rem; }
 .status { flex: none; margin: 0; padding: .18rem .55rem; border-radius: var(--radius-pill); color: var(--color-accent); background: var(--color-accent-soft); font-size: .72rem; font-weight: 850; letter-spacing: .06em; }
 .status-live { color: #9e2231; background: var(--color-live-soft); }
 .time { margin: 1.25rem 0 .85rem; font-size: 1.3rem; font-weight: 850; letter-spacing: -.03em; line-height: 1.2; }
@@ -87,4 +86,3 @@ h2 { margin: 0; font-size: clamp(1.35rem, 3vw, 1.8rem); letter-spacing: -.03em; 
 }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation-duration: .01ms !important; } }
-

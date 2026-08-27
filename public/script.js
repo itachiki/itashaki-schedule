@@ -45,8 +45,8 @@
   }
 
   function formatDate(start) {
-    const { month, day } = tokyoParts(start);
-    return { label: `${month}/${day}`, weekday: WEEKDAY_FORMATTER.format(start) };
+    const { year, month, day } = tokyoParts(start);
+    return { year, label: `${month}/${day}`, weekday: WEEKDAY_FORMATTER.format(start) };
   }
 
   function formatTimeRange(start, end) {
@@ -110,11 +110,14 @@
     const top = document.createElement('div');
     top.className = 'card-top';
     const formattedDate = formatDate(schedule.start);
-    const date = createTextElement('p', 'date', formattedDate.label);
+    const date = createTextElement('p', 'date', '');
+    date.append(createTextElement('span', 'year', `${formattedDate.year}年`));
+    date.append(document.createTextNode(formattedDate.label));
     const weekday = createTextElement('span', 'weekday', `（${formattedDate.weekday}）`);
     date.append(weekday);
     top.append(date);
-    const statusLabel = createTextElement('p', `status${status === 'LIVE' ? ' status-live' : ''}`, status);
+    const statusText = { UPCOMING: '配信予定', LIVE: '配信中', ENDED: '配信終了' }[status];
+    const statusLabel = createTextElement('p', `status${status === 'LIVE' ? ' status-live' : ''}`, statusText);
     top.append(statusLabel);
     card.append(top);
     card.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
@@ -197,4 +200,3 @@
   loadSchedules();
   window.setInterval(render, 30000);
 })();
-
