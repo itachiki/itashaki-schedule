@@ -66,7 +66,7 @@ h1 { margin: 0; font-size: clamp(2.25rem, 7vw, 4.25rem); letter-spacing: -.05em;
 .weekday { margin-left: .3rem; }
 .status { flex: none; margin: 0; padding: .18rem .55rem; border-radius: var(--radius-pill); color: var(--color-accent); background: var(--color-accent-soft); font-size: .72rem; font-weight: 850; letter-spacing: .06em; }
 .status-live { color: #9e2231; background: var(--color-live-soft); }
-.time { margin: 1.25rem 0 .85rem; font-size: 1.3rem; font-weight: 850; letter-spacing: -.03em; line-height: 1.2; }
+.time { margin: .65rem 0 .85rem; font-size: 1.3rem; font-weight: 850; letter-spacing: -.03em; line-height: 1.2; }
 .category { align-self: flex-start; margin: 0 0 .7rem; padding: .18rem .55rem; border-radius: var(--radius-pill); color: #4d5197; background: var(--color-accent-soft); font-size: .78rem; font-weight: 750; }
 .title { margin: 0; font-size: 1.3rem; line-height: 1.35; }
 .content-name { margin: .55rem 0 0; color: var(--color-muted); font-weight: 700; }
