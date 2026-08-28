@@ -43,8 +43,7 @@
   function weekRange(now) {
     const today = tokyoDateKey(now);
     const dayOfWeek = new Date(dateKeyToUtcMs(today)).getUTCDay();
-    const daysSinceMonday = (dayOfWeek + 6) % 7;
-    const start = shiftDateKey(today, -daysSinceMonday);
+    const start = shiftDateKey(today, -dayOfWeek);
     return { start, end: shiftDateKey(start, 6) };
   }
 
