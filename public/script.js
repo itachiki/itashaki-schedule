@@ -2,7 +2,8 @@
   'use strict';
 
   const TIME_ZONE = 'Asia/Tokyo';
-  const INITIAL_FILTER = 'week';
+  const INITIAL_FILTER = 'next7';
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
   const DATE_PARTS_FORMATTER = new Intl.DateTimeFormat('en-CA', {
     timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
   });
@@ -105,10 +106,18 @@
     return element;
   }
 
+  function categoryClassName(category) {
+    if (category === '本配信') return 'category category-main';
+    if (category === '突発配信') return 'category category-special';
+    if (category === 'FF14公式' || category === 'FF公式') return 'category category-official';
+    return 'category';
+  }
+
   function createCard(schedule, status) {
+    const statusText = { UPCOMING: '配信予定', LIVE: '配信中', ENDED: '配信終了' }[status];
     const card = document.createElement('article');
     card.className = `schedule-card${status === 'LIVE' ? ' is-live' : ''}`;
-    card.setAttribute('aria-label', `${schedule.title}、${status === 'LIVE' ? '配信中' : '配信予定'}`);
+    card.setAttribute('aria-label', `${schedule.title}、${statusText}`);
     const top = document.createElement('div');
     top.className = 'card-top';
     const formattedDate = formatDate(schedule.start);
@@ -118,12 +127,11 @@
     const weekday = createTextElement('span', 'weekday', `（${formattedDate.weekday}）`);
     date.append(weekday);
     top.append(date);
-    const statusText = { UPCOMING: '配信予定', LIVE: '配信中', ENDED: '配信終了' }[status];
     const statusLabel = createTextElement('p', `status${status === 'LIVE' ? ' status-live' : ''}`, statusText);
     top.append(statusLabel);
     card.append(top);
     card.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
-    card.append(createTextElement('p', 'category', schedule.category));
+    card.append(createTextElement('p', categoryClassName(schedule.category), schedule.category));
     card.append(createTextElement('h3', 'title', schedule.title));
     if (schedule.content) card.append(createTextElement('p', 'content-name', schedule.content));
     if (schedule.description) card.append(createTextElement('p', 'description', schedule.description));
@@ -135,8 +143,10 @@
       link.href = schedule.youtubeUrl;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
-      link.textContent = 'YouTubeで見る';
-      link.setAttribute('aria-label', `${schedule.title}をYouTubeで見る（新しいタブで開く）`);
+      const isOfficial = schedule.category === 'FF14公式' || schedule.category === 'FF公式';
+      const linkText = isOfficial ? '公式情報を見る' : 'YouTubeで見る';
+      link.textContent = linkText;
+      link.setAttribute('aria-label', `${schedule.title}の${linkText}（新しいタブで開く）`);
       footer.append(link);
     }
     card.append(footer);
@@ -149,14 +159,17 @@
   }
 
   function isWithinFilter(schedule, filter, now) {
-    if (getStatus(schedule, now) === 'ENDED') return false;
     const startKey = tokyoDateKey(schedule.start);
     if (filter === 'today') return startKey === tokyoDateKey(now);
     if (filter === 'week') {
       const range = weekRange(now);
       return startKey >= range.start && startKey <= range.end;
     }
-    return true;
+    if (filter === 'next7') {
+      const startTime = schedule.start.getTime();
+      return startTime >= now.getTime() && startTime <= now.getTime() + SEVEN_DAYS_MS;
+    }
+    return getStatus(schedule, now) !== 'ENDED';
   }
 
   function render() {
@@ -165,7 +178,7 @@
     list.replaceChildren();
     list.setAttribute('aria-busy', 'false');
     if (!visible.length) {
-      setMessage('この期間に表示できる今後の配信予定はありません。', 'empty');
+      setMessage('この期間に表示できる配信予定はありません。', 'empty');
       return;
     }
     setMessage('');

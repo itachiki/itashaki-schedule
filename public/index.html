@@ -12,13 +12,21 @@
       <header class="hero">
         <p class="eyebrow">STREAM SCHEDULE</p>
         <h1>いたシャキ！配信スケジュール</h1>
+        <aside class="notices" aria-labelledby="notices-title">
+          <p id="notices-title" class="notices-title">お知らせ</p>
+          <ul class="notices-list">
+            <li>初見依頼は配信内容にかかわらず、できるかぎり対応しますので、遠慮なくおっしゃってください</li>
+            <li>本配信の最初はルレ消化を行います（アラルレ他）</li>
+          </ul>
+        </aside>
       </header>
 
       <section class="schedule-section" aria-label="配信予定一覧">
         <div class="section-heading">
           <nav class="filters" aria-label="表示する期間">
             <button class="filter-button" type="button" data-filter="today" aria-pressed="false">今日</button>
-            <button class="filter-button is-active" type="button" data-filter="week" aria-pressed="true">今週</button>
+            <button class="filter-button" type="button" data-filter="week" aria-pressed="false">今週</button>
+            <button class="filter-button is-active" type="button" data-filter="next7" aria-pressed="true">７日間後まで</button>
             <button class="filter-button" type="button" data-filter="all" aria-pressed="false">今後すべて</button>
           </nav>
         </div>
