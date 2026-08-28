@@ -23,6 +23,8 @@ public/
 
 予定はGoogleスプレッドシートで管理します。サービスアカウントには対象シートの閲覧権限だけを付与し、秘密鍵はCloudflareの暗号化されたSecretとして保存します。
 
+OGP画像は一般的なSNS・チャットに加え、noteの大画像リンクカード（`summary_large_image`）にも対応しています。
+
 ## ローカル確認
 
 Pages Functionを含むため、本番相当のローカル確認にはWranglerを使用します。
