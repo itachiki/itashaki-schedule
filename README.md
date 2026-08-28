@@ -7,7 +7,10 @@
 ```
 functions/
 └─ api/
-   └─ schedules.js # Google Sheets読取API
+   ├─ notices.js   # お知らせ読取API
+   └─ schedules.js # 配信予定読取API
+lib/
+└─ google-sheets.js # Google認証と共通のシート読取処理
 public/
 ├─ index.html      # ページ本体
 ├─ style.css       # 見た目・レスポンシブ表示
@@ -42,15 +45,34 @@ npx wrangler pages dev public
 | G | カテゴリー | 通常配信 |
 | H | 対象コンテンツ | FINAL FANTASY XIV |
 | I | 補足 | 今日ものんびりルレ消化 |
-| J | YouTube URL | https://www.youtube.com/ |
+| J | URL | https://www.youtube.com/ |
 
 - スプレッドシートのタイムゾーンは `（GMT+09:00）東京` にします。
 - C・E列は `yyyy-MM-dd`、D・F列は `HH:mm` の表示形式にします。
 - タイトル、開始日・時刻、終了日・時刻は必須です。入力途中の行は公開チェックを外してください。
 - 日付をまたぐ配信は、終了日に翌日を指定します。月またぎ・年またぎにも対応します。
 - 開始日時と終了日時を同じにすると、カードには開始時刻だけを表示します。
-- YouTube URLは安全なHTTPSのYouTube URLだけが公開ページのボタンになります。
+- 通常の配信はHTTPSのYouTube URLだけがボタンになります。`FF14公式` は公式ページを指定できるよう、任意のHTTPS URLに対応します。
 - シートの変更はAPIキャッシュの有効期間により、公開ページへ最大約60秒で反映されます。
+
+## お知らせの編集
+
+同じスプレッドシートに `notices` という名前のシートを追加し、1行目に以下の列を作成します。追加のCloudflare設定は不要です。
+
+| 列 | 内容 | 入力例 |
+| --- | --- | --- |
+| A | 公開 | チェックボックス |
+| B | 表示順 | 1 |
+| C | 見出し | 初見依頼について |
+| D | お知らせ本文 | できるかぎり対応します |
+| E | 掲載開始日時 | 2026-08-28 12:00 |
+| F | 掲載終了日時 | 2026-09-01 23:59 |
+
+- 本文は必須です。見出し、掲載開始日時、掲載終了日時は空欄でも構いません。
+- 掲載期間は日本時間で判定します。日時セルの表示形式は `yyyy-MM-dd HH:mm` にします。
+- 公開チェックが入っていて、掲載期間内のお知らせだけを表示します。
+- 表示順の小さいものから並びます。シートの変更は最大約60秒で反映されます。
+- `notices` シートがまだない場合や一時的に読み込めない場合は、HTMLにある現在のお知らせを代わりに表示します。
 
 ## Cloudflareの変数とSecret
 
@@ -59,6 +81,8 @@ Pagesプロジェクトの `Settings > Variables and Secrets` で、本番環境
 - `GOOGLE_SERVICE_ACCOUNT_JSON`：サービスアカウントJSON全文。必ず暗号化されたSecretにする
 - `GOOGLE_SHEET_ID`：スプレッドシートURLの `/d/` と `/edit` の間のID
 - `GOOGLE_SHEET_RANGE`：`schedules!A2:J`
+
+お知らせシート名を変更する場合だけ、任意のテキスト変数 `GOOGLE_NOTICES_RANGE` に `シート名!A2:F` を設定します。通常は設定不要です。
 
 サービスアカウントの `client_email` に対象スプレッドシートを閲覧者として共有します。変数を追加・変更した後は再デプロイが必要です。
 

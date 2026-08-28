@@ -13,6 +13,8 @@
   const list = document.querySelector('#schedule-list');
   const message = document.querySelector('#schedule-message');
   const filters = [...document.querySelectorAll('[data-filter]')];
+  const noticesPanel = document.querySelector('.notices');
+  const noticesList = document.querySelector('.notices-list');
   let schedules = [];
   let activeFilter = INITIAL_FILTER;
 
@@ -86,6 +88,16 @@
     }
   }
 
+  function validHttpsUrl(value) {
+    if (!value) return '';
+    try {
+      const url = new URL(value);
+      return url.protocol === 'https:' ? url.href : '';
+    } catch {
+      return '';
+    }
+  }
+
   function normaliseSchedule(raw) {
     if (!raw || typeof raw !== 'object') throw new Error('予定データがオブジェクトではありません。');
     if (typeof raw.id !== 'string' || !raw.id.trim()) throw new Error('id が不足しています。');
@@ -97,12 +109,13 @@
     const start = new Date(raw.start);
     const end = new Date(raw.end);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) throw new Error(`${raw.id}: 日時の形式または開始・終了時刻が不正です。`);
+    const category = typeof raw.category === 'string' && raw.category.trim() ? raw.category.trim() : '配信';
     return {
       id: raw.id, title: raw.title.trim(), start, end,
-      category: typeof raw.category === 'string' && raw.category.trim() ? raw.category.trim() : '配信',
+      category,
       content: typeof raw.content === 'string' ? raw.content.trim() : '',
       description: typeof raw.description === 'string' ? raw.description.trim() : '',
-      youtubeUrl: validYouTubeUrl(raw.youtubeUrl)
+      youtubeUrl: isOfficialCategory(category) ? validHttpsUrl(raw.youtubeUrl) : validYouTubeUrl(raw.youtubeUrl)
     };
   }
 
@@ -173,6 +186,36 @@
     message.className = `schedule-message${kind ? ` is-${kind}` : ''}`;
   }
 
+  function renderNotices(notices) {
+    noticesList.replaceChildren();
+    noticesPanel.hidden = notices.length === 0;
+    notices.forEach((notice) => {
+      const item = document.createElement('li');
+      if (notice.heading) {
+        const heading = createTextElement('strong', 'notice-item-title', notice.heading);
+        item.append(heading, document.createTextNode('：'));
+      }
+      item.append(document.createTextNode(notice.body));
+      noticesList.append(item);
+    });
+  }
+
+  async function loadNotices() {
+    try {
+      const response = await fetch('/api/notices', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (!Array.isArray(data)) throw new Error('お知らせAPIのレスポンスが配列ではありません。');
+      const notices = data.map((notice) => ({
+        heading: typeof notice?.heading === 'string' ? notice.heading.trim() : '',
+        body: typeof notice?.body === 'string' ? notice.body.trim() : ''
+      })).filter((notice) => notice.body);
+      renderNotices(notices);
+    } catch (error) {
+      console.warn('お知らせAPIを読み込めないため、固定のお知らせを表示します:', error);
+    }
+  }
+
   function isWithinFilter(schedule, filter, now) {
     const startKey = tokyoDateKey(schedule.start);
     if (filter === 'today') return startKey === tokyoDateKey(now);
@@ -237,6 +280,7 @@
   }
 
   filters.forEach((button) => button.addEventListener('click', () => setFilter(button.dataset.filter)));
+  loadNotices();
   loadSchedules();
   window.setInterval(render, 30000);
 })();
