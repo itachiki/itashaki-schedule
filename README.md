@@ -15,6 +15,7 @@ public/
 ├─ brand-watermark.png # 右上に固定表示する背景ロゴ
 ├─ favicon.png     # ブラウザ・ホーム画面用アイコン
 ├─ index.html      # ページ本体
+├─ ogp.jpg         # SNS・チャット共有用OGP画像
 ├─ style.css       # 見た目・レスポンシブ表示
 ├─ script.js       # API読込、日時表示、絞り込み
 └─ schedules.json  # 移行前データ・形式の参考
