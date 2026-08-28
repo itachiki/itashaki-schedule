@@ -99,7 +99,7 @@ Pagesプロジェクトの `Settings > Variables and Secrets` で、本番環境
 
 ## テーマ色の変更
 
-[`public/style.css`](public/style.css) 冒頭の `:root` にあるCSS変数を変更してください。主な色は `--color-accent`（基調色）、`--color-live`（配信中）、`--color-page`（背景）です。
+[`public/style.css`](public/style.css) 冒頭の `:root` にあるCSS変数を変更してください。主な色は `--color-accent`（基調色）、`--color-upcoming`（配信予定）、`--color-live`（配信中）、`--color-archive`（アーカイブ）、`--color-official-link`（公式情報ボタン）、`--color-page`（背景）です。
 
 ## Cloudflare Pages 設定
 

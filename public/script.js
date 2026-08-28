@@ -153,7 +153,8 @@
     date.append(weekday);
     top.append(date);
     if (!isOfficial) {
-      const statusLabel = createTextElement('p', `status${status === 'LIVE' ? ' status-live' : ''}`, statusText);
+      const statusClass = { UPCOMING: 'status-upcoming', LIVE: 'status-live', ENDED: 'status-archive' }[status];
+      const statusLabel = createTextElement('p', `status ${statusClass}`, statusText);
       top.append(statusLabel);
     }
     card.append(top);
@@ -166,7 +167,7 @@
     footer.className = 'card-footer';
     if (schedule.youtubeUrl) {
       const link = document.createElement('a');
-      link.className = 'youtube-link';
+      link.className = `youtube-link${isOfficial ? ' official-link' : ''}`;
       link.href = schedule.youtubeUrl;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
