@@ -146,7 +146,9 @@
       const isOfficial = schedule.category === 'FF14公式' || schedule.category === 'FF公式';
       const linkText = isOfficial ? '公式情報を見る' : 'YouTubeで見る';
       link.textContent = linkText;
-      link.setAttribute('aria-label', `${schedule.title}の${linkText}（新しいタブで開く）`);
+      link.setAttribute('aria-label', isOfficial
+        ? `${schedule.title}の公式情報を見る（新しいタブで開く）`
+        : `${schedule.title}をYouTubeで見る（新しいタブで開く）`);
       footer.append(link);
     }
     card.append(footer);
