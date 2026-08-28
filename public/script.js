@@ -183,7 +183,16 @@
   async function loadSchedules() {
     try {
       const response = await fetch('/api/schedules', { cache: 'no-store' });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        let detail = '';
+        try {
+          const errorData = await response.json();
+          detail = typeof errorData.detail === 'string' ? errorData.detail : '';
+        } catch {
+          // JSON以外のエラーレスポンスでは共通メッセージを使用する。
+        }
+        throw new Error(detail || `HTTP ${response.status}`);
+      }
       const data = await response.json();
       if (!Array.isArray(data)) throw new Error('配信予定APIのレスポンスが配列ではありません。');
       schedules = data.map(normaliseSchedule).sort((a, b) => a.start - b.start);
@@ -191,7 +200,8 @@
     } catch (error) {
       list.replaceChildren();
       list.setAttribute('aria-busy', 'false');
-      setMessage('配信予定を読み込めませんでした。時間をおいて再読み込みしてください。', 'error');
+      const detail = /^\d+行目/.test(error?.message || '') ? ` ${error.message}` : '';
+      setMessage(`配信予定を読み込めませんでした。${detail || ' 時間をおいて再読み込みしてください。'}`, 'error');
       console.error('配信予定APIの読み込みまたは形式のエラー:', error);
     }
   }

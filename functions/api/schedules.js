@@ -1,6 +1,7 @@
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets.readonly';
 const CACHE_SECONDS = 60;
+const GOOGLE_SHEETS_EPOCH = Date.UTC(1899, 11, 30);
 
 let cachedAccessToken = '';
 let accessTokenExpiresAt = 0;
@@ -101,7 +102,19 @@ function isPublished(value) {
   return ['TRUE', '1', 'YES', 'ON', '公開'].includes(String(value || '').trim().toUpperCase());
 }
 
+function googleSerialDate(value, rowNumber, fieldName) {
+  if (!Number.isFinite(value) || value < 1) {
+    throw new Error(`${rowNumber}行目の${fieldName}が有効な日付ではありません。`);
+  }
+  const date = new Date(GOOGLE_SHEETS_EPOCH + Math.floor(value) * 86400000);
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  const day = date.getUTCDate();
+  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 function normaliseDate(value, rowNumber, fieldName) {
+  if (typeof value === 'number') return googleSerialDate(value, rowNumber, fieldName);
   const match = String(value || '').trim().match(/^(\d{4})[\-/\.年](\d{1,2})[\-/\.月](\d{1,2})日?$/);
   if (!match) throw new Error(`${rowNumber}行目の${fieldName}は yyyy-MM-dd 形式にしてください。`);
   const year = Number(match[1]);
@@ -115,6 +128,14 @@ function normaliseDate(value, rowNumber, fieldName) {
 }
 
 function normaliseTime(value, rowNumber, fieldName) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const fraction = ((value % 1) + 1) % 1;
+    const totalSeconds = Math.round(fraction * 86400) % 86400;
+    const hour = Math.floor(totalSeconds / 3600);
+    const minute = Math.floor((totalSeconds % 3600) / 60);
+    const second = totalSeconds % 60;
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+  }
   const match = String(value || '').trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
   if (!match) throw new Error(`${rowNumber}行目の${fieldName}は HH:mm 形式にしてください。`);
   const hour = Number(match[1]);
@@ -160,8 +181,8 @@ async function fetchSchedules(env) {
     `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(env.GOOGLE_SHEET_ID)}/values/${encodeURIComponent(env.GOOGLE_SHEET_RANGE)}`
   );
   endpoint.searchParams.set('majorDimension', 'ROWS');
-  endpoint.searchParams.set('valueRenderOption', 'FORMATTED_VALUE');
-  endpoint.searchParams.set('dateTimeRenderOption', 'FORMATTED_STRING');
+  endpoint.searchParams.set('valueRenderOption', 'UNFORMATTED_VALUE');
+  endpoint.searchParams.set('dateTimeRenderOption', 'SERIAL_NUMBER');
   const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!response.ok) throw new Error(`Google Sheets APIの読み取りに失敗しました（HTTP ${response.status}）。`);
   const data = await response.json();
@@ -185,6 +206,7 @@ export async function onRequestGet(context) {
     return response;
   } catch (error) {
     console.error('Google Sheetsから配信予定を取得できませんでした:', error);
-    return jsonResponse({ error: '配信予定を取得できませんでした。' }, 502, { 'Cache-Control': 'no-store' });
+    const detail = /^\d+行目/.test(error?.message || '') ? error.message : '';
+    return jsonResponse({ error: '配信予定を取得できませんでした。', detail }, 502, { 'Cache-Control': 'no-store' });
   }
 }
