@@ -47,12 +47,14 @@ npx wrangler pages dev public
 | H | 対象コンテンツ | FINAL FANTASY XIV |
 | I | 補足 | 今日ものんびりルレ消化 |
 | J | URL | https://www.youtube.com/ |
+| K | 更新日時 | 2026/08/28 15:30 |
 
 - スプレッドシートのタイムゾーンは `（GMT+09:00）東京` にします。
 - C・E列は `yyyy-MM-dd`、D・F列は `HH:mm` の表示形式にします。
 - タイトル、開始日・時刻、終了日・時刻は必須です。入力途中の行は公開チェックを外してください。
 - 日付をまたぐ配信は、終了日に翌日を指定します。月またぎ・年またぎにも対応します。
 - 補足セル内の改行は、Webサイト上でも改行として表示されます。
+- K列に更新日時がある場合、カード下部に日本時間で表示します。
 - 開始日時と終了日時を同じにすると、カードには開始時刻だけを表示します。
 - 通常の配信はHTTPSのYouTube URLだけがボタンになります。`FF14公式` は公式ページを指定できるよう、任意のHTTPS URLに対応します。
 - シートの変更はAPIキャッシュの有効期間により、公開ページへ最大約60秒で反映されます。
@@ -82,7 +84,7 @@ Pagesプロジェクトの `Settings > Variables and Secrets` で、本番環境
 
 - `GOOGLE_SERVICE_ACCOUNT_JSON`：サービスアカウントJSON全文。必ず暗号化されたSecretにする
 - `GOOGLE_SHEET_ID`：スプレッドシートURLの `/d/` と `/edit` の間のID
-- `GOOGLE_SHEET_RANGE`：`schedules!A2:J`
+- `GOOGLE_SHEET_RANGE`：`schedules!A2:K`（従来のA～J設定もコード側で自動的にK列まで拡張します）
 
 お知らせシート名を変更する場合だけ、任意のテキスト変数 `GOOGLE_NOTICES_RANGE` に `シート名!A2:F` を設定します。通常は設定不要です。
 

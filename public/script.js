@@ -109,13 +109,20 @@
     const end = new Date(raw.end);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) throw new Error(`${raw.id}: 日時の形式または開始・終了時刻が不正です。`);
     const category = typeof raw.category === 'string' && raw.category.trim() ? raw.category.trim() : '配信';
+    const updatedAt = typeof raw.updatedAt === 'string' && raw.updatedAt.trim() ? new Date(raw.updatedAt) : null;
     return {
       id: raw.id, title: raw.title.trim(), start, end,
       category,
       content: typeof raw.content === 'string' ? raw.content.trim() : '',
       description: typeof raw.description === 'string' ? raw.description.trim() : '',
-      youtubeUrl: isOfficialCategory(category) ? validHttpsUrl(raw.youtubeUrl) : validYouTubeUrl(raw.youtubeUrl)
+      youtubeUrl: isOfficialCategory(category) ? validHttpsUrl(raw.youtubeUrl) : validYouTubeUrl(raw.youtubeUrl),
+      updatedAt: updatedAt && !Number.isNaN(updatedAt.getTime()) ? updatedAt : null
     };
+  }
+
+  function formatUpdatedAt(date) {
+    const { year, month, day, hour, minute } = tokyoParts(date);
+    return `${year}/${month}/${day} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
   }
 
   function createTextElement(tag, className, text) {
@@ -176,6 +183,9 @@
         ? `${schedule.title}の公式情報を見る（新しいタブで開く）`
         : `${schedule.title}をYouTubeで見る（新しいタブで開く）`);
       footer.append(link);
+    }
+    if (schedule.updatedAt) {
+      footer.append(createTextElement('p', 'updated-at', `更新：${formatUpdatedAt(schedule.updatedAt)}`));
     }
     card.append(footer);
     return card;

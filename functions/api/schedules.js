@@ -62,6 +62,31 @@ function normaliseTime(value, rowNumber, fieldName) {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
 }
 
+function normaliseUpdatedAt(value, rowNumber) {
+  if (value === undefined || value === null || value === '') return '';
+  try {
+    if (typeof value === 'number') {
+      const date = googleSerialDate(value, rowNumber, '更新日時');
+      const time = normaliseTime(value, rowNumber, '更新日時');
+      return `${date}T${time}+09:00`;
+    }
+    const text = String(value).trim();
+    const localMatch = text.match(/^(\d{4}[\-/\.]\d{1,2}[\-/\.]\d{1,2})[ T](\d{1,2}:\d{2}(?::\d{2})?)$/);
+    if (localMatch) {
+      const date = normaliseDate(localMatch[1], rowNumber, '更新日時');
+      const time = normaliseTime(localMatch[2], rowNumber, '更新日時');
+      return `${date}T${time}+09:00`;
+    }
+    if (/(Z|[+-]\d{2}:\d{2})$/i.test(text)) {
+      const parsed = new Date(text);
+      if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
+    }
+  } catch {
+    // 更新日時は補助情報のため、不正な場合も予定自体は表示する。
+  }
+  return '';
+}
+
 export function mapRowsToSchedules(rows = []) {
   return rows.flatMap((row, index) => {
     const rowNumber = index + 2;
@@ -84,14 +109,16 @@ export function mapRowsToSchedules(rows = []) {
       category: String(row[6] || '').trim() || '配信',
       content: String(row[7] || '').trim(),
       description: String(row[8] || '').trim(),
-      youtubeUrl: String(row[9] || '').trim()
+      youtubeUrl: String(row[9] || '').trim(),
+      updatedAt: normaliseUpdatedAt(row[10], rowNumber)
     }];
   });
 }
 
 async function fetchSchedules(env) {
   if (!env.GOOGLE_SHEET_RANGE) throw new Error('GOOGLE_SHEET_RANGE が設定されていません。');
-  const rows = await fetchGoogleSheetRows(env, env.GOOGLE_SHEET_RANGE);
+  const range = String(env.GOOGLE_SHEET_RANGE).replace(/:J(\d*)$/i, ':K$1');
+  const rows = await fetchGoogleSheetRows(env, range);
   return mapRowsToSchedules(rows);
 }
 
