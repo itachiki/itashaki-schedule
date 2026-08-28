@@ -217,6 +217,7 @@
   }
 
   function isWithinFilter(schedule, filter, now) {
+    if (getStatus(schedule, now) === 'LIVE') return true;
     const startKey = tokyoDateKey(schedule.start);
     if (filter === 'today') return startKey === tokyoDateKey(now);
     if (filter === 'week') {
