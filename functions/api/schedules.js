@@ -158,7 +158,7 @@ export function mapRowsToSchedules(rows = []) {
     const endTime = normaliseTime(row[5], rowNumber, '終了時刻');
     const start = `${startDate}T${startTime}+09:00`;
     const end = `${endDate}T${endTime}+09:00`;
-    if (new Date(end) <= new Date(start)) throw new Error(`${rowNumber}行目の終了日時は開始日時より後にしてください。`);
+    if (new Date(end) < new Date(start)) throw new Error(`${rowNumber}行目の終了日時は開始日時以降にしてください。`);
     return [{
       id: `sheet-${rowNumber}-${startDate.replace(/-/g, '')}-${startTime.replace(/:/g, '')}`,
       title,

@@ -51,12 +51,14 @@
 
   function formatTimeRange(start, end) {
     const startParts = tokyoParts(start);
+    const startLabel = `${String(startParts.hour).padStart(2, '0')}:${String(startParts.minute).padStart(2, '0')}`;
+    if (start.getTime() === end.getTime()) return startLabel;
     const endParts = tokyoParts(end);
     const startKey = tokyoDateKey(start);
     const endKey = tokyoDateKey(end);
     const daysAfterStart = Math.round((dateKeyToUtcMs(endKey) - dateKeyToUtcMs(startKey)) / 86400000);
     const endHour = endParts.hour + Math.max(0, daysAfterStart) * 24;
-    return `${String(startParts.hour).padStart(2, '0')}:${String(startParts.minute).padStart(2, '0')} ～ ${String(endHour).padStart(2, '0')}:${String(endParts.minute).padStart(2, '0')}`;
+    return `${startLabel} ～ ${String(endHour).padStart(2, '0')}:${String(endParts.minute).padStart(2, '0')}`;
   }
 
   function getStatus(schedule, now) {
