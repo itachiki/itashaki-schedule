@@ -1,51 +1,65 @@
 # 配信スケジュールサイト
 
-視聴者に配信予定を共有するための、カード型の静的Webサイトです。表示と判定は閲覧者の端末設定にかかわらず、常に日本時間（`Asia/Tokyo`）を基準にします。
+視聴者に配信予定を共有するためのカード型Webサイトです。非公開Googleスプレッドシートを管理画面として使い、Cloudflare Pages Functionが読み取り専用で予定を取得します。表示と判定は閲覧者の端末設定にかかわらず、常に日本時間（`Asia/Tokyo`）を基準にします。
 
 ## 構成
 
 ```
+functions/
+└─ api/
+   └─ schedules.js # Google Sheets読取API
 public/
 ├─ index.html      # ページ本体
 ├─ style.css       # 見た目・レスポンシブ表示
-├─ script.js       # JSON読込、日時表示、絞り込み
-└─ schedules.json  # 配信予定データ
+├─ script.js       # API読込、日時表示、絞り込み
+└─ schedules.json  # 移行前データ・形式の参考
 ```
 
-公開対象は `public/` のみです。HTMLを編集せず、`schedules.json` を編集するだけで予定を管理できます。
+予定はGoogleスプレッドシートで管理します。サービスアカウントには対象シートの閲覧権限だけを付与し、秘密鍵はCloudflareの暗号化されたSecretとして保存します。
 
 ## ローカル確認
 
-`fetch()` でJSONを読むため、`index.html` をファイルとして直接開かず、`public` をWebサーバーで配信してください。例えば Python が利用できる場合は、リポジトリ直下で次を実行します。
+Pages Functionを含むため、本番相当のローカル確認にはWranglerを使用します。
 
 ```bash
-python -m http.server 8000 --directory public
+npx wrangler pages dev public
 ```
 
-その後、`http://localhost:8000` を開きます。
+ローカルでGoogle Sheetsへ接続する場合は、リポジトリ直下に `.dev.vars` を作り、本番と同じ3変数を設定します。このファイルはGit管理対象外です。秘密鍵を含むファイルはコミットしないでください。
 
-## `schedules.json` の編集・追加
+## Googleスプレッドシート
 
-予定は配列の1要素が1配信です。日時はタイムゾーン付きISO 8601形式で入力してください。日本時間なら末尾を `+09:00` にします。
+シート名を `schedules` にして、1行目に以下の列を作成します。
 
-```json
-{
-  "id": "20260827-main",
-  "title": "FF14 ルーレット",
-  "start": "2026-08-27T23:00:00+09:00",
-  "end": "2026-08-28T01:00:00+09:00",
-  "category": "通常配信",
-  "content": "FINAL FANTASY XIV",
-  "description": "今日ものんびりルレ消化",
-  "youtubeUrl": "https://www.youtube.com/"
-}
-```
+| 列 | 内容 | 入力例 |
+| --- | --- | --- |
+| A | 公開 | チェックボックス |
+| B | タイトル | FF14 ルーレット |
+| C | 開始日 | 2026-08-27 |
+| D | 開始時刻 | 23:00 |
+| E | 終了日 | 2026-08-28 |
+| F | 終了時刻 | 01:00 |
+| G | カテゴリー | 通常配信 |
+| H | 対象コンテンツ | FINAL FANTASY XIV |
+| I | 補足 | 今日ものんびりルレ消化 |
+| J | YouTube URL | https://www.youtube.com/ |
 
-- `id`、`title`、`start`、`end` は必須です。
-- `category`、`content`、`description`、`youtubeUrl` は任意です。
-- `youtubeUrl` には `https://youtube.com/`、`https://www.youtube.com/`、または `https://youtu.be/` のURLだけを指定できます。空欄またはそれ以外はボタンを表示しません。
-- 予定を追加する場合は、同じ形式のオブジェクトを配列に加えます。開始日時の順序は自動で整列されます。
-- 日付をまたぐ予定も1件だけを入力します。たとえば終了が翌日01:00なら、画面では開始日のカードに `25:00` と表示されます。月またぎ・年またぎにも対応します。
+- スプレッドシートのタイムゾーンは `（GMT+09:00）東京` にします。
+- C・E列は `yyyy-MM-dd`、D・F列は `HH:mm` の表示形式にします。
+- タイトル、開始日・時刻、終了日・時刻は必須です。入力途中の行は公開チェックを外してください。
+- 日付をまたぐ配信は、終了日に翌日を指定します。月またぎ・年またぎにも対応します。
+- YouTube URLは安全なHTTPSのYouTube URLだけが公開ページのボタンになります。
+- シートの変更はAPIキャッシュの有効期間により、公開ページへ最大約60秒で反映されます。
+
+## Cloudflareの変数とSecret
+
+Pagesプロジェクトの `Settings > Variables and Secrets` で、本番環境に以下を設定します。
+
+- `GOOGLE_SERVICE_ACCOUNT_JSON`：サービスアカウントJSON全文。必ず暗号化されたSecretにする
+- `GOOGLE_SHEET_ID`：スプレッドシートURLの `/d/` と `/edit` の間のID
+- `GOOGLE_SHEET_RANGE`：`schedules!A2:J`
+
+サービスアカウントの `client_email` に対象スプレッドシートを閲覧者として共有します。変数を追加・変更した後は再デプロイが必要です。
 
 ## 表示ルール
 
@@ -53,7 +67,7 @@ python -m http.server 8000 --directory public
 - 「今日」「今週」は配信の**開始日**を日本時間で判定します。
 - `UPCOMING`（開始前）、`LIVE`（配信中）、`ENDED`（終了済み）を現在の日本時間で自動判定します。
 - 終了済みの予定は通常の一覧には表示しません。`LIVE` は赤い枠で強調します。
-- JSONの読込または形式に失敗した場合は画面に案内を表示し、詳しいエラーはブラウザのコンソールで確認できます。
+- APIの読込または形式に失敗した場合は画面に案内を表示し、詳しいエラーはブラウザおよびCloudflare Functionsのログで確認できます。
 
 ## テーマ色の変更
 
@@ -68,4 +82,4 @@ GitHubリポジトリを接続して、以下でデプロイします。
 - Build command: 空欄
 - Build output directory: `public`
 
-静的ファイルだけで動作するため、依存関係のインストールやビルドは不要です。
+外部ライブラリやビルドは不要です。リポジトリ直下の `functions/` はPages Functionとして自動認識されます。

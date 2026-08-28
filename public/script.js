@@ -182,17 +182,17 @@
 
   async function loadSchedules() {
     try {
-      const response = await fetch('schedules.json', { cache: 'no-store' });
+      const response = await fetch('/api/schedules', { cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      if (!Array.isArray(data)) throw new Error('schedules.json の最上位は配列にしてください。');
+      if (!Array.isArray(data)) throw new Error('配信予定APIのレスポンスが配列ではありません。');
       schedules = data.map(normaliseSchedule).sort((a, b) => a.start - b.start);
       setFilter(INITIAL_FILTER);
     } catch (error) {
       list.replaceChildren();
       list.setAttribute('aria-busy', 'false');
       setMessage('配信予定を読み込めませんでした。時間をおいて再読み込みしてください。', 'error');
-      console.error('schedules.json の読み込みまたは形式のエラー:', error);
+      console.error('配信予定APIの読み込みまたは形式のエラー:', error);
     }
   }
 
