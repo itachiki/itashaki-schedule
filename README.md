@@ -12,6 +12,7 @@ functions/
 lib/
 └─ google-sheets.js # Google認証と共通のシート読取処理
 public/
+├─ favicon.png     # ブラウザ・ホーム画面用アイコン
 ├─ index.html      # ページ本体
 ├─ style.css       # 見た目・レスポンシブ表示
 ├─ script.js       # API読込、日時表示、絞り込み
