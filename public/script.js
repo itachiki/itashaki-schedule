@@ -88,7 +88,7 @@
     }
     const start = new Date(raw.start);
     const end = new Date(raw.end);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) throw new Error(`${raw.id}: 日時の形式または開始・終了時刻が不正です。`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) throw new Error(`${raw.id}: 日時の形式または開始・終了時刻が不正です。`);
     return {
       id: raw.id, title: raw.title.trim(), start, end,
       category: typeof raw.category === 'string' && raw.category.trim() ? raw.category.trim() : '配信',
