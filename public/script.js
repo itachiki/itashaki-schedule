@@ -4,6 +4,7 @@
   const TIME_ZONE = 'Asia/Tokyo';
   const INITIAL_FILTER = 'next7';
   const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+  const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
   const DATE_PARTS_FORMATTER = new Intl.DateTimeFormat('en-CA', {
     timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
   });
@@ -57,6 +58,12 @@
     const endParts = tokyoParts(end);
     const startKey = tokyoDateKey(start);
     const endKey = tokyoDateKey(end);
+    if (startKey !== endKey && end.getTime() - start.getTime() >= TWELVE_HOURS_MS) {
+      const endDate = formatDate(end);
+      const endYear = endDate.year !== startParts.year ? `${endDate.year}年` : '';
+      const endTime = `${String(endParts.hour).padStart(2, '0')}:${String(endParts.minute).padStart(2, '0')}`;
+      return `${startLabel} ～ ${endYear}${endDate.label}（${endDate.weekday}） ${endTime}`;
+    }
     const daysAfterStart = Math.round((dateKeyToUtcMs(endKey) - dateKeyToUtcMs(startKey)) / 86400000);
     const endHour = endParts.hour + Math.max(0, daysAfterStart) * 24;
     return `${startLabel} ～ ${String(endHour).padStart(2, '0')}:${String(endParts.minute).padStart(2, '0')}`;
@@ -109,12 +116,17 @@
   function categoryClassName(category) {
     if (category === '本配信') return 'category category-main';
     if (category === '突発配信') return 'category category-special';
-    if (category === 'FF14公式' || category === 'FF公式') return 'category category-official';
+    if (isOfficialCategory(category)) return 'category category-official';
     return 'category';
   }
 
+  function isOfficialCategory(category) {
+    return category === 'FF14公式' || category === 'FF公式';
+  }
+
   function createCard(schedule, status) {
-    const statusText = { UPCOMING: '配信予定', LIVE: '配信中', ENDED: '配信終了' }[status];
+    const statusText = { UPCOMING: '配信予定', LIVE: '配信中', ENDED: 'アーカイブ' }[status];
+    const isOfficial = isOfficialCategory(schedule.category);
     const card = document.createElement('article');
     card.className = `schedule-card${status === 'LIVE' ? ' is-live' : ''}`;
     card.setAttribute('aria-label', `${schedule.title}、${statusText}`);
@@ -127,8 +139,10 @@
     const weekday = createTextElement('span', 'weekday', `（${formattedDate.weekday}）`);
     date.append(weekday);
     top.append(date);
-    const statusLabel = createTextElement('p', `status${status === 'LIVE' ? ' status-live' : ''}`, statusText);
-    top.append(statusLabel);
+    if (!isOfficial) {
+      const statusLabel = createTextElement('p', `status${status === 'LIVE' ? ' status-live' : ''}`, statusText);
+      top.append(statusLabel);
+    }
     card.append(top);
     card.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
     card.append(createTextElement('p', categoryClassName(schedule.category), schedule.category));
@@ -143,7 +157,6 @@
       link.href = schedule.youtubeUrl;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
-      const isOfficial = schedule.category === 'FF14公式' || schedule.category === 'FF公式';
       const linkText = isOfficial ? '公式情報を見る' : 'YouTubeで見る';
       link.textContent = linkText;
       link.setAttribute('aria-label', isOfficial
