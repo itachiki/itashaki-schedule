@@ -83,7 +83,7 @@ h1 { margin: 0; font-size: clamp(2.25rem, 7vw, 4.25rem); letter-spacing: -.05em;
 .card-top { display: flex; align-items: start; justify-content: space-between; gap: .75rem; }
 .date { margin: 0; color: var(--color-accent); font-size: 1.55rem; font-weight: 850; letter-spacing: -.04em; line-height: 1.1; }
 .year { display: block; margin-bottom: .3rem; color: var(--color-muted); font-size: .72rem; font-weight: 750; letter-spacing: .06em; }
-.weekday { margin-left: .15rem; }
+.weekday { margin-left: -.12em; }
 .status { flex: none; margin: 0; padding: .18rem .55rem; border-radius: var(--radius-pill); font-size: .72rem; font-weight: 850; letter-spacing: .06em; }
 .status-upcoming { color: var(--color-upcoming); background: var(--color-upcoming-soft); }
 .status-live { color: #9e2231; background: var(--color-live-soft); }
