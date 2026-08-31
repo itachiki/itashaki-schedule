@@ -21,6 +21,9 @@
   --color-category-special-soft: #fff0f2;
   --color-category-official: #272a35;
   --color-category-official-soft: #f0f1f3;
+  --color-official-card: #f0f1f3;
+  --color-official-card-border: #c8cbd1;
+  --color-official-card-shadow: rgba(39, 42, 53, 0.05);
   --color-category-default: #667085;
   --color-category-default-soft: #f5f6f7;
   --color-shadow: rgba(41, 45, 76, 0.1);
@@ -92,6 +95,7 @@ h1 { margin: 0; font-size: clamp(2.25rem, 7vw, 4.25rem); letter-spacing: -.05em;
 
 .schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1rem; }
 .schedule-card { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 100%; padding: 1.25rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); box-shadow: 0 8px 24px var(--color-shadow); }
+.schedule-card.is-official { border-color: var(--color-official-card-border); background: var(--color-official-card); box-shadow: 0 4px 14px var(--color-official-card-shadow); }
 .skeleton-card { min-height: 25rem; box-shadow: none; }
 .skeleton-line { display: block; flex: none; border-radius: .25rem; background: #e9eaf0; }
 .skeleton-date { width: 48%; height: 2.85rem; }

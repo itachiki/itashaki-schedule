@@ -147,8 +147,10 @@
     const statusText = { UPCOMING: '配信予定', LIVE: '配信中', ENDED: 'アーカイブ' }[status];
     const isOfficial = isOfficialCategory(schedule.category);
     const card = document.createElement('article');
-    card.className = `schedule-card${status === 'LIVE' ? ' is-live' : ''}`;
-    card.setAttribute('aria-label', `${schedule.title}、${statusText}`);
+    card.className = 'schedule-card';
+    if (isOfficial) card.classList.add('is-official');
+    else if (status === 'LIVE') card.classList.add('is-live');
+    card.setAttribute('aria-label', isOfficial ? `${schedule.title}、FF14公式情報` : `${schedule.title}、${statusText}`);
     const top = document.createElement('div');
     top.className = 'card-top';
     const formattedDate = formatDate(schedule.start);
