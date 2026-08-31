@@ -156,23 +156,22 @@
     card.setAttribute('aria-label', cardLabel);
     const top = document.createElement('div');
     top.className = 'card-top';
+    top.append(createTextElement('p', categoryClassName(schedule.category), schedule.category));
+    if (isOfficial && status === 'LIVE') {
+      top.append(createTextElement('p', 'status status-official-active', '実施中'));
+    } else if (!isOfficial) {
+      const statusClass = { UPCOMING: 'status-upcoming', LIVE: 'status-live', ENDED: 'status-archive' }[status];
+      top.append(createTextElement('p', `status ${statusClass}`, statusText));
+    }
+    card.append(top);
     const formattedDate = formatDate(schedule.start);
     const date = createTextElement('p', 'date', '');
     date.append(createTextElement('span', 'year', `${formattedDate.year}年`));
     date.append(document.createTextNode(formattedDate.label));
     const weekday = createTextElement('span', 'weekday', `（${formattedDate.weekday}）`);
     date.append(weekday);
-    top.append(date);
-    if (isOfficial && status === 'LIVE') {
-      top.append(createTextElement('p', 'status status-official-active', '実施中'));
-    } else if (!isOfficial) {
-      const statusClass = { UPCOMING: 'status-upcoming', LIVE: 'status-live', ENDED: 'status-archive' }[status];
-      const statusLabel = createTextElement('p', `status ${statusClass}`, statusText);
-      top.append(statusLabel);
-    }
-    card.append(top);
+    card.append(date);
     card.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
-    card.append(createTextElement('p', categoryClassName(schedule.category), schedule.category));
     card.append(createTextElement('h3', 'title', schedule.title));
     if (schedule.content) card.append(createTextElement('p', 'content-name', schedule.content));
     if (schedule.description) card.append(createTextElement('p', 'description', schedule.description));
