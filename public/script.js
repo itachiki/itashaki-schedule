@@ -150,7 +150,10 @@
     card.className = 'schedule-card';
     if (isOfficial) card.classList.add('is-official');
     else if (status === 'LIVE') card.classList.add('is-live');
-    card.setAttribute('aria-label', isOfficial ? `${schedule.title}、FF14公式情報` : `${schedule.title}、${statusText}`);
+    const cardLabel = isOfficial
+      ? `${schedule.title}、FF14公式情報${status === 'LIVE' ? '、実施中' : ''}`
+      : `${schedule.title}、${statusText}`;
+    card.setAttribute('aria-label', cardLabel);
     const top = document.createElement('div');
     top.className = 'card-top';
     const formattedDate = formatDate(schedule.start);
@@ -160,7 +163,9 @@
     const weekday = createTextElement('span', 'weekday', `（${formattedDate.weekday}）`);
     date.append(weekday);
     top.append(date);
-    if (!isOfficial) {
+    if (isOfficial && status === 'LIVE') {
+      top.append(createTextElement('p', 'status status-official-active', '実施中'));
+    } else if (!isOfficial) {
       const statusClass = { UPCOMING: 'status-upcoming', LIVE: 'status-live', ENDED: 'status-archive' }[status];
       const statusLabel = createTextElement('p', `status ${statusClass}`, statusText);
       top.append(statusLabel);

@@ -13,8 +13,8 @@
   --color-live-soft: #fff0f2;
   --color-archive: #7b5b00;
   --color-archive-soft: #fff2b8;
-  --color-official-link: var(--color-accent);
-  --color-official-link-hover: var(--color-accent-hover);
+  --color-official-link: #343741;
+  --color-official-link-hover: #20232b;
   --color-category-main: #5d63b9;
   --color-category-main-soft: #eef0ff;
   --color-category-special: #b83245;
@@ -24,6 +24,7 @@
   --color-official-card: #f0f1f3;
   --color-official-card-border: #c8cbd1;
   --color-official-card-shadow: rgba(39, 42, 53, 0.05);
+  --color-official-content: #e2e4e7;
   --color-category-default: #667085;
   --color-category-default-soft: #f5f6f7;
   --color-shadow: rgba(41, 45, 76, 0.1);
@@ -115,6 +116,7 @@ h1 { margin: 0; font-size: clamp(2.25rem, 7vw, 4.25rem); letter-spacing: -.05em;
 .status-upcoming { color: var(--color-upcoming); background: var(--color-upcoming-soft); }
 .status-live { color: #9e2231; background: var(--color-live-soft); }
 .status-archive { color: var(--color-archive); background: var(--color-archive-soft); }
+.status-official-active { color: #fff; background: var(--color-category-official); }
 .time { margin: .65rem 0 .85rem; font-size: 1.3rem; font-weight: 850; letter-spacing: -.03em; line-height: 1.2; }
 .category { align-self: flex-start; margin: 0 0 .7rem; padding: .15rem .5rem; border: 1px solid var(--color-category-default); border-radius: 0; color: var(--color-category-default); background: var(--color-category-default-soft); font-size: .78rem; font-weight: 750; }
 .category-main { border-color: var(--color-category-main); color: var(--color-category-main); background: var(--color-category-main-soft); }
@@ -129,6 +131,7 @@ h1 { margin: 0; font-size: clamp(2.25rem, 7vw, 4.25rem); letter-spacing: -.05em;
   background: var(--color-accent-soft);
   font-weight: 400;
 }
+.schedule-card.is-official .content-name { border-left-color: var(--color-category-official); background: var(--color-official-content); }
 .description { margin: .55rem 0 0; color: var(--color-muted); font-size: .94rem; white-space: pre-line; }
 .card-footer { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: .65rem; min-height: 2.75rem; margin-top: auto; padding-top: 1.2rem; }
 .updated-at { margin: 0 0 .1rem auto; color: var(--color-muted); font-size: .72rem; white-space: nowrap; }
