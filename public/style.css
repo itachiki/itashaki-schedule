@@ -136,6 +136,56 @@ h1 { margin: 0; font-size: clamp(2.25rem, 7vw, 4.25rem); letter-spacing: -.05em;
 .official-link { color: #fff; background: var(--color-official-link); }
 .official-link:hover { background: var(--color-official-link-hover); }
 
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: .82rem;
+}
+.site-footer p { margin: 0; }
+.site-footer nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .65rem 1rem; }
+.site-footer a, .text-link { color: var(--color-accent); font-weight: 700; text-underline-offset: .18em; }
+.site-footer a:hover, .text-link:hover { color: var(--color-accent-hover); }
+
+.info-shell { max-width: 880px; }
+.info-hero { max-width: 48rem; margin-bottom: 2rem; }
+.info-title { margin-bottom: .9rem; }
+.info-lead { margin: 0; color: var(--color-muted); font-size: clamp(1rem, 2.5vw, 1.16rem); }
+.info-nav { display: flex; flex-wrap: wrap; gap: .65rem; margin: 1.5rem 0 0; }
+.info-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.55rem;
+  padding: .45rem .8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-ink);
+  background: rgba(255,255,255,.72);
+  font-weight: 750;
+  text-decoration: none;
+}
+.info-nav a:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.info-content { display: grid; gap: 1rem; }
+.info-section {
+  padding: clamp(1.15rem, 3vw, 1.65rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 8px 24px var(--color-shadow);
+}
+.info-section h2 { margin: 0 0 .65rem; font-size: 1.2rem; letter-spacing: -.02em; }
+.info-section h3 { margin: 1rem 0 .35rem; font-size: 1rem; }
+.info-section p { margin: .45rem 0 0; }
+.info-section ul { margin: .55rem 0 0; padding-left: 1.25rem; }
+.info-section li + li { margin-top: .35rem; }
+.policy-meta { color: var(--color-muted); font-size: .85rem; }
+.contact-card { border-left: 4px solid var(--color-accent); }
+
 @media (max-width: 620px) {
   body::before { top: .75rem; right: -1.75rem; width: 13rem; opacity: .065; }
   .site-shell { width: min(calc(100% - 1.25rem), var(--content-width)); padding-top: 2.4rem; }
@@ -145,6 +195,8 @@ h1 { margin: 0; font-size: clamp(2.25rem, 7vw, 4.25rem); letter-spacing: -.05em;
   .filters { width: 100%; justify-content: start; }
   .filter-button { flex: 1 1 auto; }
   .schedule-grid { grid-template-columns: 1fr; }
+  .site-footer { align-items: flex-start; flex-direction: column; }
+  .site-footer nav { justify-content: flex-start; }
 }
 
 @media (max-width: 480px) {
