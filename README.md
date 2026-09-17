@@ -12,6 +12,9 @@ functions/
 lib/
 └─ google-sheets.js # Google認証と共通のシート読取処理
 public/
+├─ assets/
+│  └─ images/
+│     └─ default-stream-thumbnail.jpg # 配信枠未設定時の共通サムネイル
 ├─ brand-watermark.png # 右上に固定表示する背景ロゴ
 ├─ favicon.png     # ブラウザ・ホーム画面用アイコン
 ├─ index.html      # ページ本体
@@ -31,6 +34,12 @@ Pages Functionを含むため、本番相当のローカル確認にはWrangler�
 
 ```bash
 npx wrangler pages dev public
+```
+
+YouTube URL判定とサムネイルのフォールバックは、Node.js 20以降で次のテストを実行できます。
+
+```bash
+node --test tests/thumbnail.test.mjs
 ```
 
 ローカルでGoogle Sheetsへ接続する場合は、リポジトリ直下に `.dev.vars` を作り、本番と同じ3変数を設定します。このファイルはGit管理対象外です。秘密鍵を含むファイルはコミットしないでください。
@@ -62,6 +71,9 @@ npx wrangler pages dev public
 - K列に更新日時がある場合、カード下部に日本時間で表示します。
 - 開始日時と終了日時を同じにすると、カードには開始時刻だけを表示します。
 - 通常の配信はHTTPSのYouTube URLだけがボタンになります。`FF14公式` は公式ページを指定できるよう、任意のHTTPS URLに対応します。
+- YouTubeの動画URLがある予定は、動画IDからサムネイルを自動表示します。URLがない場合は共通の仮サムネイルを表示します。
+- YouTube URLはJ列だけでなく、補足・対象コンテンツ・タイトルの文章中に含まれている場合も検出します。
+- YouTubeサムネイルは `maxresdefault.jpg`、`hqdefault.jpg`、共通の仮サムネイルの順に自動で切り替わります。
 - シートの変更はAPIキャッシュの有効期間により、公開ページへ最大約60秒で反映されます。
 
 ## お知らせの編集

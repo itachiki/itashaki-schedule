@@ -5,6 +5,9 @@
   const INITIAL_FILTER = 'next7';
   const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
   const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+  const DEFAULT_THUMBNAIL_URL = 'assets/images/default-stream-thumbnail.jpg';
+  const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'www.youtu.be']);
+  const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
   const DATE_PARTS_FORMATTER = new Intl.DateTimeFormat('en-CA', {
     timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
   });
@@ -76,15 +79,37 @@
     return 'ENDED';
   }
 
-  function validYouTubeUrl(value) {
-    if (!value) return '';
+  function youtubeVideoFromUrl(value) {
+    if (!value) return null;
     try {
       const url = new URL(value);
-      const allowedHosts = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'www.youtu.be'];
-      return url.protocol === 'https:' && allowedHosts.includes(url.hostname) ? url.href : '';
+      if (url.protocol !== 'https:' || !YOUTUBE_HOSTS.has(url.hostname.toLowerCase())) return null;
+      let videoId = '';
+      if (url.hostname.toLowerCase().endsWith('youtu.be')) {
+        videoId = url.pathname.split('/').filter(Boolean)[0] || '';
+      } else if (url.pathname === '/watch') {
+        videoId = url.searchParams.get('v') || '';
+      } else {
+        const pathParts = url.pathname.split('/').filter(Boolean);
+        if (pathParts[0] === 'live') videoId = pathParts[1] || '';
+      }
+      return YOUTUBE_VIDEO_ID_PATTERN.test(videoId) ? { url: url.href, videoId } : null;
     } catch {
-      return '';
+      return null;
     }
+  }
+
+  function extractYouTubeVideo(...values) {
+    for (const value of values) {
+      if (typeof value !== 'string' || !value.trim()) continue;
+      const candidates = value.match(/https:\/\/[^\s<>"']+/gi) || [];
+      for (const candidate of candidates) {
+        const cleaned = candidate.replace(/[\])}>,.!?;:、。！？；：]+$/u, '');
+        const video = youtubeVideoFromUrl(cleaned);
+        if (video) return video;
+      }
+    }
+    return null;
   }
 
   function validHttpsUrl(value) {
@@ -109,13 +134,20 @@
     const end = new Date(raw.end);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) throw new Error(`${raw.id}: 日時の形式または開始・終了時刻が不正です。`);
     const category = typeof raw.category === 'string' && raw.category.trim() ? raw.category.trim() : '配信';
+    const content = typeof raw.content === 'string' ? raw.content.trim() : '';
+    const description = typeof raw.description === 'string' ? raw.description.trim() : '';
     const updatedAt = typeof raw.updatedAt === 'string' && raw.updatedAt.trim() ? new Date(raw.updatedAt) : null;
+    const youtubeVideo = extractYouTubeVideo(raw.youtubeUrl, description, content, raw.title);
+    const linkUrl = isOfficialCategory(category)
+      ? validHttpsUrl(raw.youtubeUrl) || youtubeVideo?.url || ''
+      : youtubeVideo?.url || '';
     return {
       id: raw.id, title: raw.title.trim(), start, end,
       category,
-      content: typeof raw.content === 'string' ? raw.content.trim() : '',
-      description: typeof raw.description === 'string' ? raw.description.trim() : '',
-      youtubeUrl: isOfficialCategory(category) ? validHttpsUrl(raw.youtubeUrl) : validYouTubeUrl(raw.youtubeUrl),
+      content,
+      description,
+      linkUrl,
+      youtubeVideo,
       updatedAt: updatedAt && !Number.isNaN(updatedAt.getTime()) ? updatedAt : null
     };
   }
@@ -143,7 +175,47 @@
     return category === 'FF14公式' || category === 'FF公式';
   }
 
-  function createCard(schedule, status) {
+  function createThumbnail(schedule, eagerLoad = false) {
+    const image = document.createElement('img');
+    image.className = 'schedule-thumbnail';
+    image.width = 1280;
+    image.height = 720;
+    image.loading = eagerLoad ? 'eager' : 'lazy';
+    image.decoding = 'async';
+    image.alt = schedule.youtubeVideo
+      ? `${schedule.title}のYouTubeサムネイル`
+      : '配信枠未設定の仮サムネイル';
+
+    if (schedule.youtubeVideo) {
+      image.src = `https://i.ytimg.com/vi/${schedule.youtubeVideo.videoId}/maxresdefault.jpg`;
+      image.dataset.fallbackStage = 'maxres';
+      image.addEventListener('error', () => {
+        if (image.dataset.fallbackStage === 'maxres') {
+          image.dataset.fallbackStage = 'hq';
+          image.src = `https://i.ytimg.com/vi/${schedule.youtubeVideo.videoId}/hqdefault.jpg`;
+        } else if (image.dataset.fallbackStage === 'hq') {
+          image.dataset.fallbackStage = 'default';
+          image.src = DEFAULT_THUMBNAIL_URL;
+        }
+      });
+    } else {
+      image.src = DEFAULT_THUMBNAIL_URL;
+      image.dataset.fallbackStage = 'default';
+    }
+
+    const frame = document.createElement(schedule.youtubeVideo ? 'a' : 'div');
+    frame.className = `thumbnail-frame${schedule.youtubeVideo ? ' thumbnail-link' : ''}`;
+    if (schedule.youtubeVideo) {
+      frame.href = schedule.youtubeVideo.url;
+      frame.target = '_blank';
+      frame.rel = 'noopener noreferrer';
+      frame.setAttribute('aria-label', `${schedule.title}のYouTube配信ページを開く（新しいタブ）`);
+    }
+    frame.append(image);
+    return frame;
+  }
+
+  function createCard(schedule, status, index) {
     const statusText = { UPCOMING: '配信予定', LIVE: '配信中', ENDED: 'アーカイブ' }[status];
     const isOfficial = isOfficialCategory(schedule.category);
     const card = document.createElement('article');
@@ -154,6 +226,16 @@
       ? `${schedule.title}、FF14公式情報${status === 'LIVE' ? '、実施中' : ''}`
       : `${schedule.title}、${statusText}`;
     card.setAttribute('aria-label', cardLabel);
+    card.append(createThumbnail(schedule, index < 2));
+    const formattedDate = formatDate(schedule.start);
+    const date = createTextElement('p', 'date', '');
+    date.append(createTextElement('span', 'year', `${formattedDate.year}年`));
+    date.append(document.createTextNode(formattedDate.label));
+    const weekday = createTextElement('span', 'weekday', `（${formattedDate.weekday}）`);
+    date.append(weekday);
+    card.append(date);
+    card.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
+    card.append(createTextElement('h3', 'title', schedule.title));
     const top = document.createElement('div');
     top.className = 'card-top';
     top.append(createTextElement('p', categoryClassName(schedule.category), schedule.category));
@@ -164,23 +246,14 @@
       top.append(createTextElement('p', `status ${statusClass}`, statusText));
     }
     card.append(top);
-    const formattedDate = formatDate(schedule.start);
-    const date = createTextElement('p', 'date', '');
-    date.append(createTextElement('span', 'year', `${formattedDate.year}年`));
-    date.append(document.createTextNode(formattedDate.label));
-    const weekday = createTextElement('span', 'weekday', `（${formattedDate.weekday}）`);
-    date.append(weekday);
-    card.append(date);
-    card.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
-    card.append(createTextElement('h3', 'title', schedule.title));
     if (schedule.content) card.append(createTextElement('p', 'content-name', schedule.content));
     if (schedule.description) card.append(createTextElement('p', 'description', schedule.description));
     const footer = document.createElement('div');
     footer.className = 'card-footer';
-    if (schedule.youtubeUrl) {
+    if (schedule.linkUrl) {
       const link = document.createElement('a');
       link.className = `youtube-link${isOfficial ? ' official-link' : ''}`;
-      link.href = schedule.youtubeUrl;
+      link.href = schedule.linkUrl;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       const linkText = isOfficial ? '公式情報を見る' : 'YouTubeで見る';
@@ -257,7 +330,7 @@
       return;
     }
     setMessage('');
-    visible.forEach((schedule) => list.append(createCard(schedule, getStatus(schedule, now))));
+    visible.forEach((schedule, index) => list.append(createCard(schedule, getStatus(schedule, now), index)));
   }
 
   function setFilter(filter) {
