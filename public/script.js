@@ -122,6 +122,18 @@
     }
   }
 
+  function validOfficialThumbnailUrl(value) {
+    if (!value) return '';
+    try {
+      const url = new URL(value);
+      const host = url.hostname.toLowerCase();
+      const isOfficialHost = host === 'finalfantasyxiv.com' || host.endsWith('.finalfantasyxiv.com');
+      return url.protocol === 'https:' && isOfficialHost && !url.username && !url.password && !url.port ? url.href : '';
+    } catch {
+      return '';
+    }
+  }
+
   function normaliseSchedule(raw) {
     if (!raw || typeof raw !== 'object') throw new Error('予定データがオブジェクトではありません。');
     if (typeof raw.id !== 'string' || !raw.id.trim()) throw new Error('id が不足しています。');
@@ -148,6 +160,7 @@
       description,
       linkUrl,
       youtubeVideo,
+      officialThumbnailUrl: isOfficialCategory(category) ? validOfficialThumbnailUrl(raw.officialThumbnailUrl) : '',
       updatedAt: updatedAt && !Number.isNaN(updatedAt.getTime()) ? updatedAt : null
     };
   }
@@ -215,6 +228,34 @@
     return frame;
   }
 
+  function createOfficialThumbnail(schedule, eagerLoad = false) {
+    if (!schedule.officialThumbnailUrl || !schedule.linkUrl) return null;
+    const frame = document.createElement('a');
+    frame.className = 'thumbnail-frame thumbnail-link official-thumbnail-frame';
+    frame.href = schedule.linkUrl;
+    frame.target = '_blank';
+    frame.rel = 'noopener noreferrer';
+    frame.setAttribute('aria-label', `${schedule.title}のFF14公式ページを開く（新しいタブ）`);
+
+    const image = document.createElement('img');
+    image.className = 'schedule-thumbnail official-thumbnail';
+    image.src = schedule.officialThumbnailUrl;
+    image.width = 1200;
+    image.height = 630;
+    image.loading = eagerLoad ? 'eager' : 'lazy';
+    image.decoding = 'async';
+    image.alt = `${schedule.title}のFF14公式画像`;
+    image.addEventListener('error', () => frame.remove(), { once: true });
+    frame.append(image);
+    return frame;
+  }
+
+  function hasDisplayThumbnail(schedule) {
+    return isOfficialCategory(schedule.category)
+      ? Boolean(schedule.officialThumbnailUrl && schedule.linkUrl)
+      : true;
+  }
+
   function createCard(schedule, status, thumbnailIndex) {
     const statusText = { UPCOMING: '配信予定', LIVE: '配信中', ENDED: 'アーカイブ' }[status];
     const isOfficial = isOfficialCategory(schedule.category);
@@ -226,7 +267,12 @@
       ? `${schedule.title}、FF14公式情報${status === 'LIVE' ? '、実施中' : ''}`
       : `${schedule.title}、${statusText}`;
     card.setAttribute('aria-label', cardLabel);
-    if (!isOfficial) card.append(createThumbnail(schedule, thumbnailIndex < 2));
+    if (isOfficial) {
+      const officialThumbnail = createOfficialThumbnail(schedule, thumbnailIndex < 2);
+      if (officialThumbnail) card.append(officialThumbnail);
+    } else {
+      card.append(createThumbnail(schedule, thumbnailIndex < 2));
+    }
     const formattedDate = formatDate(schedule.start);
     const date = createTextElement('p', 'date', '');
     date.append(createTextElement('span', 'year', `${formattedDate.year}年`));
@@ -332,9 +378,8 @@
     setMessage('');
     let thumbnailIndex = 0;
     visible.forEach((schedule) => {
-      const isOfficial = isOfficialCategory(schedule.category);
       list.append(createCard(schedule, getStatus(schedule, now), thumbnailIndex));
-      if (!isOfficial) thumbnailIndex += 1;
+      if (hasDisplayThumbnail(schedule)) thumbnailIndex += 1;
     });
   }
 

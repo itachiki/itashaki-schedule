@@ -33,6 +33,10 @@ class FakeElement {
     this[name] = value;
   }
 
+  remove() {
+    this.removed = true;
+  }
+
   dispatch(type) {
     this.listeners[type]?.();
   }
@@ -48,11 +52,24 @@ vm.runInContext(`
   const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'www.youtu.be']);
   const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
   ${sourceBetween('  function youtubeVideoFromUrl', '  function validHttpsUrl')}
+  ${sourceBetween('  function isOfficialCategory', '  function createThumbnail')}
   ${sourceBetween('  function createThumbnail', '  function createCard')}
-  globalThis.helpers = { youtubeVideoFromUrl, extractYouTubeVideo, createThumbnail };
+  globalThis.helpers = {
+    youtubeVideoFromUrl,
+    extractYouTubeVideo,
+    createThumbnail,
+    createOfficialThumbnail,
+    hasDisplayThumbnail
+  };
 `, context);
 
-const { youtubeVideoFromUrl, extractYouTubeVideo, createThumbnail } = context.helpers;
+const {
+  youtubeVideoFromUrl,
+  extractYouTubeVideo,
+  createThumbnail,
+  createOfficialThumbnail,
+  hasDisplayThumbnail
+} = context.helpers;
 const videoId = 'ABCDEFGHIJK';
 
 test('対応するYouTube URL形式から動画IDを取得する', () => {
@@ -107,4 +124,37 @@ test('YouTube URLがない予定はクリックできない共通画像を遅延
   assert.equal(image.loading, 'lazy');
   assert.equal(image.src, 'assets/images/default-stream-thumbnail.jpg');
   assert.equal(image.dataset.fallbackStage, 'default');
+});
+
+test('FF14公式画像は公式ページへのリンクになり、読込失敗時は画像領域を削除する', () => {
+  const schedule = {
+    title: '公式イベント',
+    category: 'FF14公式',
+    linkUrl: 'https://jp.finalfantasyxiv.com/lodestone/special/example/',
+    officialThumbnailUrl: 'https://lds-img.finalfantasyxiv.com/example/card.jpg'
+  };
+  const frame = createOfficialThumbnail(schedule, true);
+  const image = frame.children[0];
+
+  assert.equal(frame.tagName, 'a');
+  assert.equal(frame.href, schedule.linkUrl);
+  assert.equal(frame.target, '_blank');
+  assert.equal(frame.rel, 'noopener noreferrer');
+  assert.equal(image.src, schedule.officialThumbnailUrl);
+  assert.equal(image.loading, 'eager');
+  assert.equal(hasDisplayThumbnail(schedule), true);
+
+  image.dispatch('error');
+  assert.equal(frame.removed, true);
+});
+
+test('FF14公式画像を取得できない場合はサムネイルを作らない', () => {
+  const schedule = {
+    title: '公式イベント',
+    category: 'FF14公式',
+    linkUrl: 'https://jp.finalfantasyxiv.com/lodestone/special/example/',
+    officialThumbnailUrl: ''
+  };
+  assert.equal(createOfficialThumbnail(schedule), null);
+  assert.equal(hasDisplayThumbnail(schedule), false);
 });

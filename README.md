@@ -39,7 +39,7 @@ npx wrangler pages dev public
 YouTube URL判定とサムネイルのフォールバックは、Node.js 20以降で次のテストを実行できます。
 
 ```bash
-node --test tests/thumbnail.test.mjs
+node --test tests/*.test.mjs
 ```
 
 ローカルでGoogle Sheetsへ接続する場合は、リポジトリ直下に `.dev.vars` を作り、本番と同じ3変数を設定します。このファイルはGit管理対象外です。秘密鍵を含むファイルはコミットしないでください。
@@ -74,7 +74,9 @@ node --test tests/thumbnail.test.mjs
 - YouTubeの動画URLがある予定は、動画IDからサムネイルを自動表示します。URLがない場合は共通の仮サムネイルを表示します。
 - YouTube URLはJ列だけでなく、補足・対象コンテンツ・タイトルの文章中に含まれている場合も検出します。
 - YouTubeサムネイルは `maxresdefault.jpg`、`hqdefault.jpg`、共通の仮サムネイルの順に自動で切り替わります。
-- `FF14公式` の予定は、URLの有無にかかわらずサムネイルを表示しません。
+- `FF14公式` の予定は、`jp.finalfantasyxiv.com` のリンク先に公式OGP画像がある場合だけ画像全体を表示します。画像を取得できない場合はサムネイルを表示しません。
+- FF14公式画像の取得結果は、通信量を抑えるためCloudflareでキャッシュします。画像からは必ず元の公式ページを開きます。
+- FF14公式画像の利用条件に対応するため、ページ下部に `© SQUARE ENIX` を表示します。
 - シートの変更はAPIキャッシュの有効期間により、公開ページへ最大約60秒で反映されます。
 
 ## お知らせの編集

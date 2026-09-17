@@ -1,4 +1,5 @@
 import { fetchGoogleSheetRows } from '../../lib/google-sheets.js';
+import { getOfficialThumbnailUrl } from '../../lib/official-thumbnail.js';
 
 const CACHE_SECONDS = 60;
 const GOOGLE_SHEETS_EPOCH = Date.UTC(1899, 11, 30);
@@ -122,6 +123,18 @@ async function fetchSchedules(env) {
   return mapRowsToSchedules(rows);
 }
 
+function isOfficialCategory(category) {
+  return category === 'FF14公式' || category === 'FF公式';
+}
+
+async function addOfficialThumbnails(schedules, context) {
+  return Promise.all(schedules.map(async (schedule) => {
+    if (!isOfficialCategory(schedule.category)) return schedule;
+    const officialThumbnailUrl = await getOfficialThumbnailUrl(schedule.youtubeUrl, context);
+    return officialThumbnailUrl ? { ...schedule, officialThumbnailUrl } : schedule;
+  }));
+}
+
 export async function onRequestGet(context) {
   const cacheKey = new Request(new URL('/api/schedules', context.request.url), { method: 'GET' });
   const cache = caches.default;
@@ -129,7 +142,7 @@ export async function onRequestGet(context) {
   if (cached) return cached;
 
   try {
-    const schedules = await fetchSchedules(context.env);
+    const schedules = await addOfficialThumbnails(await fetchSchedules(context.env), context);
     const response = jsonResponse(schedules, 200, {
       'Cache-Control': `public, max-age=30, s-maxage=${CACHE_SECONDS}`
     });
