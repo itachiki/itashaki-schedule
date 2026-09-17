@@ -215,7 +215,7 @@
     return frame;
   }
 
-  function createCard(schedule, status, index) {
+  function createCard(schedule, status, thumbnailIndex) {
     const statusText = { UPCOMING: '配信予定', LIVE: '配信中', ENDED: 'アーカイブ' }[status];
     const isOfficial = isOfficialCategory(schedule.category);
     const card = document.createElement('article');
@@ -226,7 +226,7 @@
       ? `${schedule.title}、FF14公式情報${status === 'LIVE' ? '、実施中' : ''}`
       : `${schedule.title}、${statusText}`;
     card.setAttribute('aria-label', cardLabel);
-    card.append(createThumbnail(schedule, index < 2));
+    if (!isOfficial) card.append(createThumbnail(schedule, thumbnailIndex < 2));
     const formattedDate = formatDate(schedule.start);
     const date = createTextElement('p', 'date', '');
     date.append(createTextElement('span', 'year', `${formattedDate.year}年`));
@@ -330,7 +330,12 @@
       return;
     }
     setMessage('');
-    visible.forEach((schedule, index) => list.append(createCard(schedule, getStatus(schedule, now), index)));
+    let thumbnailIndex = 0;
+    visible.forEach((schedule) => {
+      const isOfficial = isOfficialCategory(schedule.category);
+      list.append(createCard(schedule, getStatus(schedule, now), thumbnailIndex));
+      if (!isOfficial) thumbnailIndex += 1;
+    });
   }
 
   function setFilter(filter) {
