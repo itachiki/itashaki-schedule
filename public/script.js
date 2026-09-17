@@ -274,17 +274,17 @@
       card.classList.add('has-thumbnail');
       card.append(thumbnail);
     }
-    const body = document.createElement('div');
-    body.className = 'card-body';
+    const summary = document.createElement('div');
+    summary.className = 'card-summary';
     const formattedDate = formatDate(schedule.start);
     const date = createTextElement('p', 'date', '');
     date.append(createTextElement('span', 'year', `${formattedDate.year}年`));
     date.append(document.createTextNode(formattedDate.label));
     const weekday = createTextElement('span', 'weekday', `（${formattedDate.weekday}）`);
     date.append(weekday);
-    body.append(date);
-    body.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
-    body.append(createTextElement('h3', 'title', schedule.title));
+    summary.append(date);
+    summary.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
+    summary.append(createTextElement('h3', 'title', schedule.title));
     const top = document.createElement('div');
     top.className = 'card-top';
     top.append(createTextElement('p', categoryClassName(schedule.category), schedule.category));
@@ -294,9 +294,11 @@
       const statusClass = { UPCOMING: 'status-upcoming', LIVE: 'status-live', ENDED: 'status-archive' }[status];
       top.append(createTextElement('p', `status ${statusClass}`, statusText));
     }
-    body.append(top);
-    if (schedule.content) body.append(createTextElement('p', 'content-name', schedule.content));
-    if (schedule.description) body.append(createTextElement('p', 'description', schedule.description));
+    summary.append(top);
+    const details = document.createElement('div');
+    details.className = 'card-details';
+    if (schedule.content) details.append(createTextElement('p', 'content-name', schedule.content));
+    if (schedule.description) details.append(createTextElement('p', 'description', schedule.description));
     const footer = document.createElement('div');
     footer.className = 'card-footer';
     if (schedule.linkUrl) {
@@ -315,8 +317,8 @@
     if (schedule.updatedAt) {
       footer.append(createTextElement('p', 'updated-at', `更新：${formatUpdatedAt(schedule.updatedAt)}`));
     }
-    body.append(footer);
-    card.append(body);
+    details.append(footer);
+    card.append(summary, details);
     return card;
   }
 
