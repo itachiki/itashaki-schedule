@@ -198,6 +198,7 @@ h1 { margin: 0; font-size: clamp(2.25rem, 7vw, 4.25rem); letter-spacing: -.05em;
   font-size: .82rem;
 }
 .site-footer p { margin: 0; }
+.site-footer.site-footer-centered { align-items: center; justify-content: center; text-align: center; }
 .site-footer nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .65rem 1rem; }
 .site-footer a, .text-link { color: var(--color-accent); font-weight: 700; text-underline-offset: .18em; }
 .site-footer a:hover, .text-link:hover { color: var(--color-accent-hover); }
