@@ -267,21 +267,24 @@
       ? `${schedule.title}、FF14公式情報${status === 'LIVE' ? '、実施中' : ''}`
       : `${schedule.title}、${statusText}`;
     card.setAttribute('aria-label', cardLabel);
-    if (isOfficial) {
-      const officialThumbnail = createOfficialThumbnail(schedule, thumbnailIndex < 2);
-      if (officialThumbnail) card.append(officialThumbnail);
-    } else {
-      card.append(createThumbnail(schedule, thumbnailIndex < 2));
+    const thumbnail = isOfficial
+      ? createOfficialThumbnail(schedule, thumbnailIndex < 2)
+      : createThumbnail(schedule, thumbnailIndex < 2);
+    if (thumbnail) {
+      card.classList.add('has-thumbnail');
+      card.append(thumbnail);
     }
+    const body = document.createElement('div');
+    body.className = 'card-body';
     const formattedDate = formatDate(schedule.start);
     const date = createTextElement('p', 'date', '');
     date.append(createTextElement('span', 'year', `${formattedDate.year}年`));
     date.append(document.createTextNode(formattedDate.label));
     const weekday = createTextElement('span', 'weekday', `（${formattedDate.weekday}）`);
     date.append(weekday);
-    card.append(date);
-    card.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
-    card.append(createTextElement('h3', 'title', schedule.title));
+    body.append(date);
+    body.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
+    body.append(createTextElement('h3', 'title', schedule.title));
     const top = document.createElement('div');
     top.className = 'card-top';
     top.append(createTextElement('p', categoryClassName(schedule.category), schedule.category));
@@ -291,9 +294,9 @@
       const statusClass = { UPCOMING: 'status-upcoming', LIVE: 'status-live', ENDED: 'status-archive' }[status];
       top.append(createTextElement('p', `status ${statusClass}`, statusText));
     }
-    card.append(top);
-    if (schedule.content) card.append(createTextElement('p', 'content-name', schedule.content));
-    if (schedule.description) card.append(createTextElement('p', 'description', schedule.description));
+    body.append(top);
+    if (schedule.content) body.append(createTextElement('p', 'content-name', schedule.content));
+    if (schedule.description) body.append(createTextElement('p', 'description', schedule.description));
     const footer = document.createElement('div');
     footer.className = 'card-footer';
     if (schedule.linkUrl) {
@@ -312,7 +315,8 @@
     if (schedule.updatedAt) {
       footer.append(createTextElement('p', 'updated-at', `更新：${formatUpdatedAt(schedule.updatedAt)}`));
     }
-    card.append(footer);
+    body.append(footer);
+    card.append(body);
     return card;
   }
 
