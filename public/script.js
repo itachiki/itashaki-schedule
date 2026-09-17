@@ -6,6 +6,7 @@
   const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
   const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
   const DEFAULT_THUMBNAIL_URL = 'assets/images/default-stream-thumbnail.jpg';
+  const STREAM_BREAK_THUMBNAIL_URL = 'assets/images/stream-break-thumbnail.jpg';
   const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'www.youtu.be']);
   const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
   const DATE_PARTS_FORMATTER = new Intl.DateTimeFormat('en-CA', {
@@ -150,9 +151,11 @@
     const description = typeof raw.description === 'string' ? raw.description.trim() : '';
     const updatedAt = typeof raw.updatedAt === 'string' && raw.updatedAt.trim() ? new Date(raw.updatedAt) : null;
     const youtubeVideo = extractYouTubeVideo(raw.youtubeUrl, description, content, raw.title);
-    const linkUrl = isOfficialCategory(category)
-      ? validHttpsUrl(raw.youtubeUrl) || youtubeVideo?.url || ''
-      : youtubeVideo?.url || '';
+    const linkUrl = isStreamBreakCategory(category)
+      ? ''
+      : isOfficialCategory(category)
+        ? validHttpsUrl(raw.youtubeUrl) || youtubeVideo?.url || ''
+        : youtubeVideo?.url || '';
     return {
       id: raw.id, title: raw.title.trim(), start, end,
       category,
@@ -179,6 +182,7 @@
 
   function categoryClassName(category) {
     if (category === '本配信') return 'category category-main';
+    if (isStreamBreakCategory(category)) return 'category category-break';
     if (category === '突発配信') return 'category category-special';
     if (isOfficialCategory(category)) return 'category category-official';
     return 'category';
@@ -188,18 +192,32 @@
     return category === 'FF14公式' || category === 'FF公式';
   }
 
+  function isStreamBreakCategory(category) {
+    return category === '本配信休み';
+  }
+
+  function shouldDisplayTime(category) {
+    return !isStreamBreakCategory(category);
+  }
+
   function createThumbnail(schedule, eagerLoad = false) {
+    const isStreamBreak = isStreamBreakCategory(schedule.category);
     const image = document.createElement('img');
     image.className = 'schedule-thumbnail';
     image.width = 1280;
     image.height = 720;
     image.loading = eagerLoad ? 'eager' : 'lazy';
     image.decoding = 'async';
-    image.alt = schedule.youtubeVideo
-      ? `${schedule.title}のYouTubeサムネイル`
-      : '配信枠未設定の仮サムネイル';
+    image.alt = isStreamBreak
+      ? `${schedule.title}の配信休みサムネイル`
+      : schedule.youtubeVideo
+        ? `${schedule.title}のYouTubeサムネイル`
+        : '配信枠未設定の仮サムネイル';
 
-    if (schedule.youtubeVideo) {
+    if (isStreamBreak) {
+      image.src = STREAM_BREAK_THUMBNAIL_URL;
+      image.dataset.fallbackStage = 'stream-break';
+    } else if (schedule.youtubeVideo) {
       image.src = `https://i.ytimg.com/vi/${schedule.youtubeVideo.videoId}/maxresdefault.jpg`;
       image.dataset.fallbackStage = 'maxres';
       image.addEventListener('error', () => {
@@ -216,9 +234,10 @@
       image.dataset.fallbackStage = 'default';
     }
 
-    const frame = document.createElement(schedule.youtubeVideo ? 'a' : 'div');
-    frame.className = `thumbnail-frame${schedule.youtubeVideo ? ' thumbnail-link' : ''}`;
-    if (schedule.youtubeVideo) {
+    const linksToYouTube = !isStreamBreak && schedule.youtubeVideo;
+    const frame = document.createElement(linksToYouTube ? 'a' : 'div');
+    frame.className = `thumbnail-frame${linksToYouTube ? ' thumbnail-link' : ''}`;
+    if (linksToYouTube) {
       frame.href = schedule.youtubeVideo.url;
       frame.target = '_blank';
       frame.rel = 'noopener noreferrer';
@@ -259,13 +278,16 @@
   function createCard(schedule, status, thumbnailIndex) {
     const statusText = { UPCOMING: '配信予定', LIVE: '配信中', ENDED: 'アーカイブ' }[status];
     const isOfficial = isOfficialCategory(schedule.category);
+    const isStreamBreak = isStreamBreakCategory(schedule.category);
     const card = document.createElement('article');
     card.className = 'schedule-card';
     if (isOfficial) card.classList.add('is-official');
-    else if (status === 'LIVE') card.classList.add('is-live');
+    else if (!isStreamBreak && status === 'LIVE') card.classList.add('is-live');
     const cardLabel = isOfficial
       ? `${schedule.title}、FF14公式情報${status === 'LIVE' ? '、実施中' : ''}`
-      : `${schedule.title}、${statusText}`;
+      : isStreamBreak
+        ? `${schedule.title}、本配信休み`
+        : `${schedule.title}、${statusText}`;
     card.setAttribute('aria-label', cardLabel);
     const thumbnail = isOfficial
       ? createOfficialThumbnail(schedule, thumbnailIndex < 2)
@@ -283,14 +305,16 @@
     const weekday = createTextElement('span', 'weekday', `（${formattedDate.weekday}）`);
     date.append(weekday);
     summary.append(date);
-    summary.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
+    if (shouldDisplayTime(schedule.category)) {
+      summary.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
+    }
     summary.append(createTextElement('h3', 'title', schedule.title));
     const top = document.createElement('div');
     top.className = 'card-top';
     top.append(createTextElement('p', categoryClassName(schedule.category), schedule.category));
-    if (isOfficial && status === 'LIVE') {
+    if (!isStreamBreak && isOfficial && status === 'LIVE') {
       top.append(createTextElement('p', 'status status-official-active', '実施中'));
-    } else if (!isOfficial) {
+    } else if (!isStreamBreak && !isOfficial) {
       const statusClass = { UPCOMING: 'status-upcoming', LIVE: 'status-live', ENDED: 'status-archive' }[status];
       top.append(createTextElement('p', `status ${statusClass}`, statusText));
     }

@@ -49,14 +49,18 @@ const context = {
 vm.createContext(context);
 vm.runInContext(`
   const DEFAULT_THUMBNAIL_URL = 'assets/images/default-stream-thumbnail.jpg';
+  const STREAM_BREAK_THUMBNAIL_URL = 'assets/images/stream-break-thumbnail.jpg';
   const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'www.youtu.be']);
   const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
   ${sourceBetween('  function youtubeVideoFromUrl', '  function validHttpsUrl')}
+  ${sourceBetween('  function categoryClassName', '  function isOfficialCategory')}
   ${sourceBetween('  function isOfficialCategory', '  function createThumbnail')}
   ${sourceBetween('  function createThumbnail', '  function createCard')}
   globalThis.helpers = {
     youtubeVideoFromUrl,
     extractYouTubeVideo,
+    categoryClassName,
+    shouldDisplayTime,
     createThumbnail,
     createOfficialThumbnail,
     hasDisplayThumbnail
@@ -66,6 +70,8 @@ vm.runInContext(`
 const {
   youtubeVideoFromUrl,
   extractYouTubeVideo,
+  categoryClassName,
+  shouldDisplayTime,
   createThumbnail,
   createOfficialThumbnail,
   hasDisplayThumbnail
@@ -124,6 +130,27 @@ test('YouTube URLがない予定はクリックできない共通画像を遅延
   assert.equal(image.loading, 'lazy');
   assert.equal(image.src, 'assets/images/default-stream-thumbnail.jpg');
   assert.equal(image.dataset.fallbackStage, 'default');
+});
+
+test('本配信休みは専用画像をリンクなしで表示し、時間を表示しない', () => {
+  const frame = createThumbnail({
+    title: '本配信お休み',
+    category: '本配信休み',
+    youtubeVideo: { videoId, url: `https://www.youtube.com/watch?v=${videoId}` }
+  });
+  const image = frame.children[0];
+
+  assert.equal(frame.tagName, 'div');
+  assert.equal(frame.className, 'thumbnail-frame');
+  assert.equal(image.src, 'assets/images/stream-break-thumbnail.jpg');
+  assert.equal(image.alt, '本配信お休みの配信休みサムネイル');
+  assert.equal(categoryClassName('本配信休み'), 'category category-break');
+  assert.equal(shouldDisplayTime('本配信休み'), false);
+  assert.equal(shouldDisplayTime('本配信'), true);
+});
+
+test('突発配信は専用のカテゴリークラスを使用する', () => {
+  assert.equal(categoryClassName('突発配信'), 'category category-special');
 });
 
 test('FF14公式画像は公式ページへのリンクになり、読込失敗時は画像領域を削除する', () => {
