@@ -93,12 +93,19 @@ export function mapRowsToSchedules(rows = []) {
     const rowNumber = index + 2;
     if (!row.some((value) => String(value || '').trim())) return [];
     if (!isPublished(row[0])) return [];
-    const title = String(row[1] || '').trim();
-    if (!title) throw new Error(`${rowNumber}行目のタイトルが空です。`);
+    const category = String(row[6] || '').trim() || '配信';
+    const isStreamBreak = category === '本配信休み';
+    const enteredTitle = String(row[1] || '').trim();
+    if (!enteredTitle && !isStreamBreak) throw new Error(`${rowNumber}行目のタイトルが空です。`);
+    const title = enteredTitle || '本配信休み';
     const startDate = normaliseDate(row[2], rowNumber, '開始日');
-    const startTime = normaliseTime(row[3], rowNumber, '開始時刻');
+    const startTime = isStreamBreak && String(row[3] ?? '').trim() === ''
+      ? '00:00:00'
+      : normaliseTime(row[3], rowNumber, '開始時刻');
     const endDate = normaliseDate(row[4], rowNumber, '終了日');
-    const endTime = normaliseTime(row[5], rowNumber, '終了時刻');
+    const endTime = isStreamBreak && String(row[5] ?? '').trim() === ''
+      ? '23:59:59'
+      : normaliseTime(row[5], rowNumber, '終了時刻');
     const start = `${startDate}T${startTime}+09:00`;
     const end = `${endDate}T${endTime}+09:00`;
     if (new Date(end) < new Date(start)) throw new Error(`${rowNumber}行目の終了日時は開始日時以降にしてください。`);
@@ -107,7 +114,7 @@ export function mapRowsToSchedules(rows = []) {
       title,
       start,
       end,
-      category: String(row[6] || '').trim() || '配信',
+      category,
       content: String(row[7] || '').trim(),
       description: String(row[8] || '').trim(),
       youtubeUrl: String(row[9] || '').trim(),

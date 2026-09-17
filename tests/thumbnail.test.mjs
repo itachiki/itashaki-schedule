@@ -60,7 +60,9 @@ vm.runInContext(`
     youtubeVideoFromUrl,
     extractYouTubeVideo,
     categoryClassName,
+    categoryThemeClassName,
     shouldDisplayTime,
+    shouldDisplayTitle,
     createThumbnail,
     createOfficialThumbnail,
     hasDisplayThumbnail
@@ -71,7 +73,9 @@ const {
   youtubeVideoFromUrl,
   extractYouTubeVideo,
   categoryClassName,
+  categoryThemeClassName,
   shouldDisplayTime,
+  shouldDisplayTitle,
   createThumbnail,
   createOfficialThumbnail,
   hasDisplayThumbnail
@@ -145,12 +149,21 @@ test('本配信休みは専用画像をリンクなしで表示し、時間を�
   assert.equal(image.src, 'assets/images/stream-break-thumbnail.jpg');
   assert.equal(image.alt, '本配信お休みの配信休みサムネイル');
   assert.equal(categoryClassName('本配信休み'), 'category category-break');
+  assert.equal(categoryThemeClassName('本配信休み'), 'category-theme-break');
   assert.equal(shouldDisplayTime('本配信休み'), false);
+  assert.equal(shouldDisplayTitle('本配信休み'), false);
   assert.equal(shouldDisplayTime('本配信'), true);
+  assert.equal(shouldDisplayTitle('本配信'), true);
 });
 
 test('突発配信は専用のカテゴリークラスを使用する', () => {
   assert.equal(categoryClassName('突発配信'), 'category category-special');
+  assert.equal(categoryThemeClassName('突発配信'), 'category-theme-special');
+});
+
+test('本配信は青系テーマクラスを使用する', () => {
+  assert.equal(categoryClassName('本配信'), 'category category-main');
+  assert.equal(categoryThemeClassName('本配信'), 'category-theme-main');
 });
 
 test('FF14公式画像は公式ページへのリンクになり、読込失敗時は画像領域を削除する', () => {

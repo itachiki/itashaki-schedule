@@ -138,7 +138,10 @@
   function normaliseSchedule(raw) {
     if (!raw || typeof raw !== 'object') throw new Error('予定データがオブジェクトではありません。');
     if (typeof raw.id !== 'string' || !raw.id.trim()) throw new Error('id が不足しています。');
-    if (typeof raw.title !== 'string' || !raw.title.trim()) throw new Error(`${raw.id}: title が不足しています。`);
+    const category = typeof raw.category === 'string' && raw.category.trim() ? raw.category.trim() : '配信';
+    const enteredTitle = typeof raw.title === 'string' ? raw.title.trim() : '';
+    if (!enteredTitle && !isStreamBreakCategory(category)) throw new Error(`${raw.id}: title が不足しています。`);
+    const title = enteredTitle || '本配信休み';
     if (typeof raw.start !== 'string' || typeof raw.end !== 'string') throw new Error(`${raw.id}: start または end が不足しています。`);
     if (!/(Z|[+-]\d{2}:\d{2})$/i.test(raw.start) || !/(Z|[+-]\d{2}:\d{2})$/i.test(raw.end)) {
       throw new Error(`${raw.id}: start と end はタイムゾーン付きISO日時で指定してください。`);
@@ -146,7 +149,6 @@
     const start = new Date(raw.start);
     const end = new Date(raw.end);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) throw new Error(`${raw.id}: 日時の形式または開始・終了時刻が不正です。`);
-    const category = typeof raw.category === 'string' && raw.category.trim() ? raw.category.trim() : '配信';
     const content = typeof raw.content === 'string' ? raw.content.trim() : '';
     const description = typeof raw.description === 'string' ? raw.description.trim() : '';
     const updatedAt = typeof raw.updatedAt === 'string' && raw.updatedAt.trim() ? new Date(raw.updatedAt) : null;
@@ -157,7 +159,7 @@
         ? validHttpsUrl(raw.youtubeUrl) || youtubeVideo?.url || ''
         : youtubeVideo?.url || '';
     return {
-      id: raw.id, title: raw.title.trim(), start, end,
+      id: raw.id, title, start, end,
       category,
       content,
       description,
@@ -188,6 +190,14 @@
     return 'category';
   }
 
+  function categoryThemeClassName(category) {
+    if (category === '本配信') return 'category-theme-main';
+    if (isStreamBreakCategory(category)) return 'category-theme-break';
+    if (category === '突発配信') return 'category-theme-special';
+    if (isOfficialCategory(category)) return 'category-theme-official';
+    return 'category-theme-default';
+  }
+
   function isOfficialCategory(category) {
     return category === 'FF14公式' || category === 'FF公式';
   }
@@ -197,6 +207,10 @@
   }
 
   function shouldDisplayTime(category) {
+    return !isStreamBreakCategory(category);
+  }
+
+  function shouldDisplayTitle(category) {
     return !isStreamBreakCategory(category);
   }
 
@@ -281,6 +295,7 @@
     const isStreamBreak = isStreamBreakCategory(schedule.category);
     const card = document.createElement('article');
     card.className = 'schedule-card';
+    card.classList.add(categoryThemeClassName(schedule.category));
     if (isOfficial) card.classList.add('is-official');
     else if (!isStreamBreak && status === 'LIVE') card.classList.add('is-live');
     const cardLabel = isOfficial
@@ -308,7 +323,9 @@
     if (shouldDisplayTime(schedule.category)) {
       summary.append(createTextElement('p', 'time', formatTimeRange(schedule.start, schedule.end)));
     }
-    summary.append(createTextElement('h3', 'title', schedule.title));
+    if (shouldDisplayTitle(schedule.category)) {
+      summary.append(createTextElement('h3', 'title', schedule.title));
+    }
     const top = document.createElement('div');
     top.className = 'card-top';
     top.append(createTextElement('p', categoryClassName(schedule.category), schedule.category));
