@@ -156,12 +156,16 @@ h1 { margin: 0; font-size: clamp(2.25rem, 7vw, 4.25rem); letter-spacing: -.05em;
     gap: 1rem 1.25rem;
   }
   .schedule-card.has-thumbnail > .thumbnail-frame {
+    align-self: start;
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: auto;
     margin: 0;
     border-radius: .8rem;
   }
-  .schedule-card.has-thumbnail > .thumbnail-frame .schedule-thumbnail { object-fit: cover; }
+  .schedule-card.has-thumbnail > .thumbnail-frame .schedule-thumbnail {
+    height: auto;
+    object-fit: contain;
+  }
   .schedule-card.has-thumbnail > .card-summary { grid-column: 2; grid-row: 1; }
   .schedule-card.has-thumbnail > .card-details { grid-column: 1 / -1; grid-row: 2; }
   .skeleton-card {
