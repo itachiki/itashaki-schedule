@@ -384,7 +384,7 @@
 
   async function loadNotices() {
     try {
-      const response = await fetch('/api/notices', { cache: 'no-store' });
+      const response = await fetch('api/notices', { cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       if (!Array.isArray(data)) throw new Error('お知らせAPIのレスポンスが配列ではありません。');
@@ -442,7 +442,7 @@
 
   async function loadSchedules() {
     try {
-      const response = await fetch('/api/schedules', { cache: 'no-store' });
+      const response = await fetch('api/schedules', { cache: 'no-store' });
       if (!response.ok) {
         let detail = '';
         try {
