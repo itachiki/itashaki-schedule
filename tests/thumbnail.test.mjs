@@ -49,7 +49,7 @@ const context = {
 vm.createContext(context);
 vm.runInContext(`
   const DEFAULT_THUMBNAIL_URL = 'assets/images/default-stream-thumbnail.jpg';
-  const STREAM_BREAK_THUMBNAIL_URL = 'assets/images/stream-break-thumbnail.jpg';
+  const STREAM_BREAK_THUMBNAIL_URL = 'assets/images/stream-break-thumbnail.jpg?v=2';
   const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'www.youtu.be']);
   const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
   ${sourceBetween('  function youtubeVideoFromUrl', '  function validHttpsUrl')}
@@ -146,7 +146,7 @@ test('本配信休みは専用画像をリンクなしで表示し、時間を�
 
   assert.equal(frame.tagName, 'div');
   assert.equal(frame.className, 'thumbnail-frame');
-  assert.equal(image.src, 'assets/images/stream-break-thumbnail.jpg');
+  assert.equal(image.src, 'assets/images/stream-break-thumbnail.jpg?v=2');
   assert.equal(image.alt, '本配信お休みの配信休みサムネイル');
   assert.equal(categoryClassName('本配信休み'), 'category category-break');
   assert.equal(categoryThemeClassName('本配信休み'), 'category-theme-break');
