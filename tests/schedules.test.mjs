@@ -5,6 +5,7 @@ import { mapRowsToSchedules } from '../functions/api/schedules.js';
 function row(overrides = {}) {
   const values = [
     true,
+    12,
     '予定タイトル',
     '2026-09-20',
     '23:00',
@@ -21,9 +22,10 @@ function row(overrides = {}) {
 }
 
 test('本配信休みはタイトルと開始・終了時刻を空欄にできる', () => {
-  const [schedule] = mapRowsToSchedules([row({ 1: '', 3: '', 5: '', 6: '本配信休み' })]);
+  const [schedule] = mapRowsToSchedules([row({ 2: '', 4: '', 6: '', 7: '本配信休み' })]);
 
   assert.equal(schedule.title, '本配信休み');
+  assert.equal(schedule.videoSequence, '12');
   assert.equal(schedule.start, '2026-09-20T00:00:00+09:00');
   assert.equal(schedule.end, '2026-09-21T23:59:59+09:00');
   assert.equal(schedule.category, '本配信休み');
@@ -31,14 +33,35 @@ test('本配信休みはタイトルと開始・終了時刻を空欄にでき�
 
 test('本配信は引き続きタイトルが必須', () => {
   assert.throws(
-    () => mapRowsToSchedules([row({ 1: '', 6: '本配信' })]),
+    () => mapRowsToSchedules([row({ 2: '', 7: '本配信' })]),
     /2行目のタイトルが空です/
   );
 });
 
 test('本配信休み以外は開始・終了時刻が必須', () => {
   assert.throws(
-    () => mapRowsToSchedules([row({ 3: '', 6: '本配信' })]),
+    () => mapRowsToSchedules([row({ 4: '', 7: '本配信' })]),
     /2行目の開始時刻は HH:mm 形式/
   );
+});
+
+test('動画連番を含む新しいA～L列を読み取る', () => {
+  const [schedule] = mapRowsToSchedules([row({ 1: 27, 7: '突発配信' })]);
+
+  assert.equal(schedule.videoSequence, '27');
+  assert.equal(schedule.title, '予定タイトル');
+  assert.equal(schedule.category, '突発配信');
+  assert.equal(schedule.content, '対象コンテンツ');
+});
+
+test('移行中は従来のA～K列も読み取れる', () => {
+  const legacyRow = [
+    true, '従来形式', '2026-09-20', '23:00', '2026-09-21', '01:00',
+    '本配信', '対象コンテンツ', '補足', '', ''
+  ];
+  const [schedule] = mapRowsToSchedules([legacyRow]);
+
+  assert.equal(schedule.videoSequence, '');
+  assert.equal(schedule.title, '従来形式');
+  assert.equal(schedule.category, '本配信');
 });

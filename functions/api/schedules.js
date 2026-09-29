@@ -88,44 +88,54 @@ function normaliseUpdatedAt(value, rowNumber) {
   return '';
 }
 
+function hasVideoSequenceColumn(row) {
+  const startDateCandidate = row[3];
+  if (typeof startDateCandidate === 'number') return Number.isFinite(startDateCandidate) && startDateCandidate >= 1;
+  return /^(\d{4})[\-/\.年](\d{1,2})[\-/\.月](\d{1,2})日?$/.test(String(startDateCandidate || '').trim());
+}
+
 export function mapRowsToSchedules(rows = []) {
   return rows.flatMap((row, index) => {
     const rowNumber = index + 2;
     if (!row.some((value) => String(value || '').trim())) return [];
     if (!isPublished(row[0])) return [];
-    const category = String(row[6] || '').trim() || '配信';
+    const hasSequence = hasVideoSequenceColumn(row);
+    const offset = hasSequence ? 1 : 0;
+    const videoSequence = hasSequence ? String(row[1] ?? '').trim() : '';
+    const category = String(row[6 + offset] || '').trim() || '配信';
     const isStreamBreak = category === '本配信休み';
-    const enteredTitle = String(row[1] || '').trim();
+    const enteredTitle = String(row[1 + offset] || '').trim();
     if (!enteredTitle && !isStreamBreak) throw new Error(`${rowNumber}行目のタイトルが空です。`);
     const title = enteredTitle || '本配信休み';
-    const startDate = normaliseDate(row[2], rowNumber, '開始日');
-    const startTime = isStreamBreak && String(row[3] ?? '').trim() === ''
+    const startDate = normaliseDate(row[2 + offset], rowNumber, '開始日');
+    const startTime = isStreamBreak && String(row[3 + offset] ?? '').trim() === ''
       ? '00:00:00'
-      : normaliseTime(row[3], rowNumber, '開始時刻');
-    const endDate = normaliseDate(row[4], rowNumber, '終了日');
-    const endTime = isStreamBreak && String(row[5] ?? '').trim() === ''
+      : normaliseTime(row[3 + offset], rowNumber, '開始時刻');
+    const endDate = normaliseDate(row[4 + offset], rowNumber, '終了日');
+    const endTime = isStreamBreak && String(row[5 + offset] ?? '').trim() === ''
       ? '23:59:59'
-      : normaliseTime(row[5], rowNumber, '終了時刻');
+      : normaliseTime(row[5 + offset], rowNumber, '終了時刻');
     const start = `${startDate}T${startTime}+09:00`;
     const end = `${endDate}T${endTime}+09:00`;
     if (new Date(end) < new Date(start)) throw new Error(`${rowNumber}行目の終了日時は開始日時以降にしてください。`);
     return [{
       id: `sheet-${rowNumber}-${startDate.replace(/-/g, '')}-${startTime.replace(/:/g, '')}`,
+      videoSequence,
       title,
       start,
       end,
       category,
-      content: String(row[7] || '').trim(),
-      description: String(row[8] || '').trim(),
-      youtubeUrl: String(row[9] || '').trim(),
-      updatedAt: normaliseUpdatedAt(row[10], rowNumber)
+      content: String(row[7 + offset] || '').trim(),
+      description: String(row[8 + offset] || '').trim(),
+      youtubeUrl: String(row[9 + offset] || '').trim(),
+      updatedAt: normaliseUpdatedAt(row[10 + offset], rowNumber)
     }];
   });
 }
 
 async function fetchSchedules(env) {
   if (!env.GOOGLE_SHEET_RANGE) throw new Error('GOOGLE_SHEET_RANGE が設定されていません。');
-  const range = String(env.GOOGLE_SHEET_RANGE).replace(/:J(\d*)$/i, ':K$1');
+  const range = String(env.GOOGLE_SHEET_RANGE).replace(/:(?:J|K)(\d*)$/i, ':L$1');
   const rows = await fetchGoogleSheetRows(env, range);
   return mapRowsToSchedules(rows);
 }

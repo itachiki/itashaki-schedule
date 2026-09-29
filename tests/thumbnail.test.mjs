@@ -63,6 +63,7 @@ vm.runInContext(`
     categoryThemeClassName,
     shouldDisplayTime,
     shouldDisplayTitle,
+    shouldDisplayVideoSequence,
     createThumbnail,
     createOfficialThumbnail,
     hasDisplayThumbnail
@@ -76,6 +77,7 @@ const {
   categoryThemeClassName,
   shouldDisplayTime,
   shouldDisplayTitle,
+  shouldDisplayVideoSequence,
   createThumbnail,
   createOfficialThumbnail,
   hasDisplayThumbnail
@@ -164,6 +166,14 @@ test('突発配信は専用のカテゴリークラスを使用する', () => {
 test('本配信は青系テーマクラスを使用する', () => {
   assert.equal(categoryClassName('本配信'), 'category category-main');
   assert.equal(categoryThemeClassName('本配信'), 'category-theme-main');
+});
+
+test('動画連番は本配信と突発配信だけに表示する', () => {
+  assert.equal(shouldDisplayVideoSequence('本配信', '12'), true);
+  assert.equal(shouldDisplayVideoSequence('突発配信', '12'), true);
+  assert.equal(shouldDisplayVideoSequence('本配信休み', '12'), false);
+  assert.equal(shouldDisplayVideoSequence('FF14公式', '12'), false);
+  assert.equal(shouldDisplayVideoSequence('本配信', ''), false);
 });
 
 test('FF14公式画像は公式ページへのリンクになり、読込失敗時は画像領域を削除する', () => {

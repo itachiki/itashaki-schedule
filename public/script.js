@@ -151,6 +151,9 @@
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) throw new Error(`${raw.id}: 日時の形式または開始・終了時刻が不正です。`);
     const content = typeof raw.content === 'string' ? raw.content.trim() : '';
     const description = typeof raw.description === 'string' ? raw.description.trim() : '';
+    const videoSequence = raw.videoSequence === undefined || raw.videoSequence === null
+      ? ''
+      : String(raw.videoSequence).trim();
     const updatedAt = typeof raw.updatedAt === 'string' && raw.updatedAt.trim() ? new Date(raw.updatedAt) : null;
     const youtubeVideo = extractYouTubeVideo(raw.youtubeUrl, description, content, raw.title);
     const linkUrl = isStreamBreakCategory(category)
@@ -161,6 +164,7 @@
     return {
       id: raw.id, title, start, end,
       category,
+      videoSequence,
       content,
       description,
       linkUrl,
@@ -212,6 +216,10 @@
 
   function shouldDisplayTitle(category) {
     return !isStreamBreakCategory(category);
+  }
+
+  function shouldDisplayVideoSequence(category, videoSequence) {
+    return (category === '本配信' || category === '突発配信') && Boolean(videoSequence);
   }
 
   function createThumbnail(schedule, eagerLoad = false) {
@@ -293,16 +301,18 @@
     const statusText = { UPCOMING: '配信予定', LIVE: '配信中', ENDED: 'アーカイブ' }[status];
     const isOfficial = isOfficialCategory(schedule.category);
     const isStreamBreak = isStreamBreakCategory(schedule.category);
+    const displaysSequence = shouldDisplayVideoSequence(schedule.category, schedule.videoSequence);
     const card = document.createElement('article');
     card.className = 'schedule-card';
     card.classList.add(categoryThemeClassName(schedule.category));
     if (isOfficial) card.classList.add('is-official');
     else if (!isStreamBreak && status === 'LIVE') card.classList.add('is-live');
+    const sequenceLabel = displaysSequence ? `、その${schedule.videoSequence}` : '';
     const cardLabel = isOfficial
       ? `${schedule.title}、FF14公式情報${status === 'LIVE' ? '、実施中' : ''}`
       : isStreamBreak
         ? `${schedule.title}、本配信休み`
-        : `${schedule.title}、${statusText}`;
+        : `${schedule.title}${sequenceLabel}、${statusText}`;
     card.setAttribute('aria-label', cardLabel);
     const thumbnail = isOfficial
       ? createOfficialThumbnail(schedule, thumbnailIndex < 2)
@@ -328,7 +338,13 @@
     }
     const top = document.createElement('div');
     top.className = 'card-top';
-    top.append(createTextElement('p', categoryClassName(schedule.category), schedule.category));
+    const categoryGroup = document.createElement('div');
+    categoryGroup.className = 'category-group';
+    categoryGroup.append(createTextElement('p', categoryClassName(schedule.category), schedule.category));
+    if (displaysSequence) {
+      categoryGroup.append(createTextElement('span', 'video-sequence', `その${schedule.videoSequence}`));
+    }
+    top.append(categoryGroup);
     if (!isStreamBreak && isOfficial && status === 'LIVE') {
       top.append(createTextElement('p', 'status status-official-active', '実施中'));
     } else if (!isStreamBreak && !isOfficial) {
