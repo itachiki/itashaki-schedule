@@ -20,6 +20,8 @@ public/
 ├─ favicon.png     # ブラウザ・ホーム画面用アイコン
 ├─ index.html      # ページ本体
 ├─ ogp.jpg         # SNS・チャット共有用OGP画像
+├─ schedule-privacy/
+│  └─ index.html   # 配信スケジュール専用プライバシーポリシー
 ├─ style.css       # 見た目・レスポンシブ表示
 ├─ script.js       # API読込、日時表示、絞り込み
 └─ schedules.json  # 移行前データ・形式の参考
