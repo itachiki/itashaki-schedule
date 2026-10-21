@@ -65,7 +65,7 @@
     const endKey = tokyoDateKey(end);
     if (startKey !== endKey && end.getTime() - start.getTime() >= TWELVE_HOURS_MS) {
       const endDate = formatDate(end);
-      const endYear = endDate.year !== startParts.year ? `${endDate.year}年` : '';
+      const endYear = endDate.year !== startParts.year ? `${endDate.year}/` : '';
       const endTime = `${String(endParts.hour).padStart(2, '0')}:${String(endParts.minute).padStart(2, '0')}`;
       return `${startLabel} ～ ${endYear}${endDate.label}（${endDate.weekday}） ${endTime}`;
     }
