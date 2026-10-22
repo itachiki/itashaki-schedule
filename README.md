@@ -22,6 +22,7 @@ public/
 ├─ ogp.jpg         # SNS・チャット共有用OGP画像
 ├─ schedule-privacy/
 │  └─ index.html   # 配信スケジュール専用プライバシーポリシー
+├─ _headers        # 静的ページのセキュリティヘッダー
 ├─ style.css       # 見た目・レスポンシブ表示
 ├─ script.js       # API読込、日時表示、絞り込み
 └─ schedules.json  # 移行前データ・形式の参考
@@ -30,6 +31,14 @@ public/
 予定はGoogleスプレッドシートで管理します。サービスアカウントには対象シートの閲覧権限だけを付与し、秘密鍵はCloudflareの暗号化されたSecretとして保存します。
 
 OGP画像は一般的なSNS・チャットに加え、noteの大画像リンクカード（`summary_large_image`）にも対応しています。
+
+## セキュリティ
+
+- GoogleサービスアカウントJSONはCloudflareの暗号化されたSecretとして保存し、Gitへ追加しません。
+- サービスアカウントには対象スプレッドシートの閲覧権限だけを付与します。
+- `public/_headers`でCSP、クリックジャッキング対策、権限ポリシー、Referrer Policy、段階的なHSTSを設定します。
+- HSTSは初期値を7日間とし、独自ドメイン全体のHTTPS運用に問題がないことを確認してから延長します。`includeSubDomains`と`preload`は使用しません。
+- Pages FunctionsのJSONレスポンスには、`lib/security-headers.js`からAPI向けの同等ヘッダーを付与します。
 
 ## ローカル確認
 

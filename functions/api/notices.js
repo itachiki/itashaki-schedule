@@ -1,4 +1,5 @@
 import { fetchGoogleSheetRows } from '../../lib/google-sheets.js';
+import { API_SECURITY_HEADERS } from '../../lib/security-headers.js';
 
 const CACHE_SECONDS = 60;
 const DEFAULT_NOTICES_RANGE = 'notices!A2:F';
@@ -8,8 +9,8 @@ function jsonResponse(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
+      ...API_SECURITY_HEADERS,
       'Content-Type': 'application/json; charset=utf-8',
-      'X-Content-Type-Options': 'nosniff',
       ...extraHeaders
     }
   });

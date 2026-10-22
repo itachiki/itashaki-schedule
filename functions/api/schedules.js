@@ -1,5 +1,6 @@
 import { fetchGoogleSheetRows } from '../../lib/google-sheets.js';
 import { getOfficialThumbnailUrl } from '../../lib/official-thumbnail.js';
+import { API_SECURITY_HEADERS } from '../../lib/security-headers.js';
 
 const CACHE_SECONDS = 60;
 const GOOGLE_SHEETS_EPOCH = Date.UTC(1899, 11, 30);
@@ -8,8 +9,8 @@ function jsonResponse(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
+      ...API_SECURITY_HEADERS,
       'Content-Type': 'application/json; charset=utf-8',
-      'X-Content-Type-Options': 'nosniff',
       ...extraHeaders
     }
   });
