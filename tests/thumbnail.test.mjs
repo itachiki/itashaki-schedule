@@ -48,7 +48,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext(`
-  const DEFAULT_THUMBNAIL_URL = 'assets/images/default-stream-thumbnail.jpg';
+  const DEFAULT_THUMBNAIL_URL = 'assets/images/default-stream-thumbnail.jpg?v=2';
   const STREAM_BREAK_THUMBNAIL_URL = 'assets/images/stream-break-thumbnail.jpg?v=2';
   const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'www.youtu.be']);
   const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
@@ -123,9 +123,9 @@ test('YouTube画像はmaxres、hq、共通画像の順にフォールバック�
   image.dispatch('error');
   assert.equal(image.src, `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`);
   image.dispatch('error');
-  assert.equal(image.src, 'assets/images/default-stream-thumbnail.jpg');
+  assert.equal(image.src, 'assets/images/default-stream-thumbnail.jpg?v=2');
   image.dispatch('error');
-  assert.equal(image.src, 'assets/images/default-stream-thumbnail.jpg');
+  assert.equal(image.src, 'assets/images/default-stream-thumbnail.jpg?v=2');
 });
 
 test('YouTube URLがない予定はクリックできない共通画像を遅延読込する', () => {
@@ -134,7 +134,7 @@ test('YouTube URLがない予定はクリックできない共通画像を遅延
 
   assert.equal(frame.tagName, 'div');
   assert.equal(image.loading, 'lazy');
-  assert.equal(image.src, 'assets/images/default-stream-thumbnail.jpg');
+  assert.equal(image.src, 'assets/images/default-stream-thumbnail.jpg?v=2');
   assert.equal(image.dataset.fallbackStage, 'default');
 });
 

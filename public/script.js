@@ -5,7 +5,7 @@
   const INITIAL_FILTER = 'next7';
   const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
   const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
-  const DEFAULT_THUMBNAIL_URL = 'assets/images/default-stream-thumbnail.jpg';
+  const DEFAULT_THUMBNAIL_URL = 'assets/images/default-stream-thumbnail.jpg?v=2';
   const STREAM_BREAK_THUMBNAIL_URL = 'assets/images/stream-break-thumbnail.jpg?v=2';
   const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'www.youtu.be']);
   const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
